@@ -23,7 +23,6 @@ def main():
 
     # Remove initial zero returns
     assets_df = remove_initial_zero_returns(assets_df)
-    print(assets_df)
 
 
 def remove_initial_zero_returns(df):
