@@ -28,9 +28,9 @@ def main():
 
     # Generate weights
     weights_df = assets_df.copy()
-    weights_df["SPY"] = 1/3
-    weights_df["GC"] = 1/3
-    weights_df["CO"] = 1/3
+    weights_df["SPY"] = 1/2
+    weights_df["GC"] = 1/4
+    weights_df["CO"] = 1/4
 
     # Create an instance of the backtest engine
     engine = Engine(weights_df, assets_df)
@@ -39,8 +39,13 @@ def main():
     mon_to_fri_df = pd.read_csv(MON_TO_FRI_DATA_PATH)
     mon_to_fri_df["Date"] = pd.to_datetime(mon_to_fri_df["Date"])
     start_date = pd.to_datetime("2010-01-01")
-    end_date = pd.to_datetime("2010-12-31")
+    end_date = pd.to_datetime("2024-01-01")
     engine.prepare(start_date, end_date, mon_to_fri_df)
+
+    # Run the backtest
+    engine.run()
+
+    print(engine.portfolio_df)
 
 
 def remove_initial_zero_returns(df):

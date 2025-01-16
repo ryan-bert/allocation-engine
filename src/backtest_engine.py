@@ -1,3 +1,5 @@
+import pandas as pd
+
 class Engine:
 
     def __init__(self, weights, returns, initial_capital=1):
@@ -36,7 +38,54 @@ class Engine:
 
 
     def run(self, fee_rate=0):
-        pass
+
+        # Initialization
+        portfolio_value = self.initial_capital
+        daily_returns = []
+        cumulative_returns = []
+        portfolio_values = []
+        transaction_costs = []
+
+        prev_weights = None
+
+        # Iterate over each date
+        for date in self.weights_df.index:
+            # Extract weights and returns for the current date
+            current_weights = self.weights_df.loc[date]
+            current_returns = self.returns_df.loc[date]
+
+            # Calculate daily portfolio return
+            daily_return = (current_weights * current_returns).sum()
+
+            # Calculate transaction costs
+            if prev_weights is not None:
+                weight_change = (current_weights - prev_weights).abs().sum()
+                cost = fee_rate * weight_change * portfolio_value
+            else:
+                cost = 0.0
+
+            # Update portfolio value
+            portfolio_value *= (1 + daily_return)
+            portfolio_value -= cost
+
+            # Store results
+            portfolio_values.append(portfolio_value)
+            daily_returns.append(daily_return)
+            transaction_costs.append(cost)
+            cumulative_returns.append((portfolio_value / self.initial_capital) - 1)
+
+            # Update previous weights
+            prev_weights = current_weights
+        
+        # Compile results into a DataFrame
+        self.portfolio_df = pd.DataFrame({
+            'Date': self.weights_df.index,
+            'Portfolio Value': portfolio_values,
+            'Daily Return': daily_returns,
+            'Cumulative Return': cumulative_returns,
+            'Transaction Cost': transaction_costs
+        })
+
 
     def get_results(self):
         pass
