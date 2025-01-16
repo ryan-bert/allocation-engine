@@ -18,7 +18,7 @@ def main():
 
     # Select tickers for backtest
     etf_df = etf_df[["Date", "SPY"]]
-    futures_df = futures_df[["Date", "GC", "CO"]]
+    futures_df = futures_df[["Date", "GC"]]
 
     # Combine ETF and futures data
     assets_df = pd.merge(etf_df, futures_df, on="Date", how="inner")
