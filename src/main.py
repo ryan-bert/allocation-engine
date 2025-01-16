@@ -18,7 +18,7 @@ def main():
 
     # Select tickers for backtest
     etf_df = etf_df[["Date", "SPY"]]
-    futures_df = futures_df[["Date", "GC"]]
+    futures_df = futures_df[["Date", "GC", "CL"]]
 
     # Combine ETF and futures data
     assets_df = pd.merge(etf_df, futures_df, on="Date", how="inner")
@@ -28,8 +28,9 @@ def main():
 
     # Generate weights
     weights_df = assets_df.copy()
-    weights_df["SPY"] = 0
-    weights_df["GC"] = 1
+    weights_df["SPY"] = 0.33333
+    weights_df["GC"] = 0.33333
+    weights_df["CL"] = 0.33333
 
     # Create an instance of the backtest engine
     engine = Engine(weights_df, assets_df)
