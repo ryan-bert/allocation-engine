@@ -3,6 +3,7 @@ import pandas as pd
 # Define constants
 ETF_DATA_PATH = '~/Documents/Financial Data/daily_etf_index_returns.csv'
 FUTURES_DATA_PATH = '~/Documents/Financial Data/daily_futures_returns.csv'
+MON_TO_FRI_DATA_PATH = '~/Documents/Financial Data/Utilities/mon_to_fri_dates.csv'
 
 def main():
 
@@ -23,6 +24,12 @@ def main():
 
     # Remove initial zero returns
     assets_df = remove_initial_zero_returns(assets_df)
+
+    # Generate weights
+    weights_df = assets_df.copy()
+    weights_df["SPY"] = 1/3
+    weights_df["GC"] = 1/3
+    weights_df["CO"] = 1/3
 
 
 def remove_initial_zero_returns(df):
