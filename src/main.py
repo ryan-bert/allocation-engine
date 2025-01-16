@@ -44,7 +44,9 @@ def main():
     # Run the backtest
     engine.run()
 
-    print(engine.portfolio_df)
+    # Print the results
+    engine.get_results()
+    print(engine.results)
 
 
 def remove_initial_zero_returns(df):

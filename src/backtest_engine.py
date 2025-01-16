@@ -1,4 +1,5 @@
 import pandas as pd
+import empyrical as ep
 
 class Engine:
 
@@ -88,4 +89,17 @@ class Engine:
 
 
     def get_results(self):
-        pass
+        
+        # Calculate metrics
+        daily_returns = self.portfolio_df["Daily Return"]
+        sharpe_ratio = ep.sharpe_ratio(daily_returns)
+        max_drawdown = ep.max_drawdown(daily_returns)
+        annualized_return = ep.annual_return(daily_returns)
+        annualized_volatility = ep.annual_volatility(daily_returns)
+
+        self.results = pd.Series({
+            'Sharpe Ratio': sharpe_ratio,
+            'Max Drawdown': max_drawdown,
+            'Annualized Return': annualized_return,
+            'Annualized Volatility': annualized_volatility
+        })
