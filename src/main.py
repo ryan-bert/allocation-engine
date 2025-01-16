@@ -1,4 +1,5 @@
 import pandas as pd
+from backtest_engine import Engine
 
 # Define constants
 ETF_DATA_PATH = '~/Documents/Financial Data/daily_etf_index_returns.csv'
@@ -30,6 +31,16 @@ def main():
     weights_df["SPY"] = 1/3
     weights_df["GC"] = 1/3
     weights_df["CO"] = 1/3
+
+    # Create an instance of the backtest engine
+    engine = Engine(weights_df, assets_df)
+
+    # Prepare the backtest
+    mon_to_fri_df = pd.read_csv(MON_TO_FRI_DATA_PATH)
+    mon_to_fri_df["Date"] = pd.to_datetime(mon_to_fri_df["Date"])
+    start_date = pd.to_datetime("2010-01-01")
+    end_date = pd.to_datetime("2010-12-31")
+    engine.prepare(start_date, end_date, mon_to_fri_df)
 
 
 def remove_initial_zero_returns(df):
