@@ -28,8 +28,8 @@ def main():
 
     # Generate weights
     weights_df = assets_df.copy()
-    weights_df["SPY"] = 0.5
-    weights_df["GC"] = 0.5
+    weights_df["SPY"] = 0
+    weights_df["GC"] = 1
 
     # Create an instance of the backtest engine
     engine = Engine(weights_df, assets_df)
