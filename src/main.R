@@ -3,6 +3,7 @@ suppressMessages({
   library(RPostgres)
   library(jsonlite)
   library(dplyr)
+  library(ggplot2)
 })
 
 ###################### ASSET SELECTION & PRE-PROCESSING ######################
@@ -82,8 +83,24 @@ portfolio_df <- portfolio_df %>%
 
 ###################### BACKTEST ######################
 
-# Calculate 
+# Calculate portfolio returns
+backtest_df <- portfolio_df %>%
+  group_by(Date) %>%
+  summarise(
+    Portfolio_Return = sum(Return * Weight)
+  ) %>%
+  ungroup()
 
+# Define start date for backtest
+start_date <- min(backtest_df$Date)
+backtest_df <- backtest_df %>%
+  filter(Date >= start_date)
 
+# Calculate cumulative returns
+backtest_df <- backtest_df %>%
+  mutate(
+    Cumulative_Return = cumprod(1 + Portfolio_Return) - 1
+  )
 
 ###################### PERFORMANCE ######################
+
