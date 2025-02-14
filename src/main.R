@@ -31,13 +31,26 @@ dbDisconnect(conn)
 
 # ETF selection
 etf_df <- etf_df %>%
-  filter(Ticker != "TLT")
+  filter(Ticker %in% c("SPY", "QQQ", "GLD", "SOXX", "EFA"))
 
 # Stock selection
 stocks_df <- stocks_df %>%
-  filter(Ticker %in% c("AAPL", "MSFT", "AMZN", "GOOGL"))
+  filter(Ticker %in% c("AAPL", "MSFT", "AMZN", "GOOGL", "NVDA"))
 
+# Combine the data
+portfolio_df <- bind_rows(stocks_df, etf_df)
 
+# Get maximum min date
+start_date <- portfolio_df %>%
+  group_by(Ticker) %>%
+  summarise(min_date = min(Date)) %>%
+  ungroup() %>%
+  summarise(max_min_date = max(min_date)) %>%
+  pull()
+
+# Filter data to start from maximum min date
+portfolio_df <- portfolio_df %>%
+  filter(Date >= start_date)
 
 ###################### STRATEGY ######################
 
