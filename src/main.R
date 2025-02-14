@@ -54,14 +54,35 @@ portfolio_df <- portfolio_df %>%
 
 ###################### STRATEGY ######################
 
+# Define weights
+weights <- c(
+  "SPY" = 1 / 3,
+  "QQQ" = 0,
+  "GLD" = 1 / 3,
+  "SOXX" = 0,
+  "EFA" = 1 / 3,
+  "AAPL" = 0,
+  "MSFT" = 0,
+  "AMZN" = 0,
+  "GOOGL" = 0,
+  "NVDA" = 0
+)
 
 
+# Convert to data frame
+weights_df <- data.frame(
+  Ticker = names(weights),
+  Weight = as.numeric(weights)
+)
 
-
-
+# Left join portfolio and weights
+portfolio_df <- portfolio_df %>%
+  left_join(weights_df, by = "Ticker") %>%
+  filter(Weight > 0)
 
 ###################### BACKTEST ######################
 
+# Calculate 
 
 
 
