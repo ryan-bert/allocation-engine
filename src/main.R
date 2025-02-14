@@ -27,9 +27,6 @@ conn <- dbConnect(
 stocks_df <- dbGetQuery(conn, "SELECT * FROM equities")
 etf_df <- dbGetQuery(conn, "SELECT * FROM etfs")
 
-# Close the connection
-dbDisconnect(conn)
-
 # ETF selection
 etf_df <- etf_df %>%
   filter(Ticker %in% c("SPY", "QQQ", "GLD", "SOXX", "EFA"))
@@ -102,5 +99,19 @@ backtest_df <- backtest_df %>%
     Cumulative_Return = cumprod(1 + Portfolio_Return) - 1
   )
 
+# Calculate indexed return
+backtest_df <- backtest_df %>%
+  mutate(
+    Indexed_Return = 100 * (1 + Cumulative_Return)
+  )
+
 ###################### PERFORMANCE ######################
 
+# Calculate rolling drawdown
+backtest_df <- backtest_df %>%
+  mutate(
+    Roll_Max = cummax(Indexed_Return),
+    Drawdown = (Indexed_Return - Roll_Max) / Roll_Max
+  )
+
+#! Pull bond data for RFR
