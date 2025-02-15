@@ -27,7 +27,9 @@ conn <- dbConnect(
 
 # Load the data from the database
 stocks_df <- dbGetQuery(conn, "SELECT * FROM equities")
+stocks_df$Date <- as.Date(stocks_df$Date)
 etf_df <- dbGetQuery(conn, "SELECT * FROM etfs")
+etf_df$Date <- as.Date(etf_df$Date)
 
 # ETF selection
 etf_df <- etf_df %>%
@@ -96,7 +98,7 @@ backtest_df <- portfolio_df %>%
   ungroup()
 
 # Define start date for backtest
-start_date <- "2000-01-01"
+start_date <- "2020-01-01"
 backtest_df <- backtest_df %>%
   filter(Date >= start_date)
 cat("\nBacktest Start Date:", start_date, "\n")
@@ -277,8 +279,8 @@ suppressMessages({
 
 # Plot the rolling drawdown with benchmark comparison
 ggplot(backtest_df, aes(x = Date)) +
-  geom_line(aes(y = Benchmark_Drawdown, color = "Benchmark"), linewidth = 0.75) +
-  geom_line(aes(y = Drawdown, color = "Portfolio"), linewidth = 0.75) +
+  geom_line(aes(y = Benchmark_Drawdown, color = "Benchmark")) +
+  geom_line(aes(y = Drawdown, color = "Portfolio")) +
   scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
   labs(
     title = "Rolling Drawdown",
