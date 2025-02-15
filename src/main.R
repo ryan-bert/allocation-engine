@@ -111,7 +111,8 @@ backtest_df <- backtest_df %>%
 backtest_df <- backtest_df %>%
   mutate(
     Indexed_Return = 100 * (1 + Cumulative_Return)
-  )
+  ) %>%
+  select(-Cumulative_Return)
 
 ###################### PERFORMANCE ######################
 
@@ -120,7 +121,8 @@ backtest_df <- backtest_df %>%
   mutate(
     Roll_Max = cummax(Indexed_Return),
     Drawdown = (Indexed_Return - Roll_Max) / Roll_Max
-  )
+  ) %>%
+  select(-Roll_Max)
 
 # Pull bond data and compute RFR
 bonds_df <- dbGetQuery(conn, "SELECT * FROM bonds") %>%
@@ -162,8 +164,68 @@ calmar_ratio <- annual_return / abs(max_drawdown)
 # Combine performance metrics
 performance_df <- data.frame(
   Metric = c("CAGR", "Annualized Volatility", "Sharpe Ratio", "Max Drawdown", "Sortino Ratio", "Calmar Ratio"),
-  Value = c(annual_return, annual_vol, sharpe_ratio, max_drawdown, sortino_ratio, calmar_ratio)
+  Portfolio = c(annual_return, annual_vol, sharpe_ratio, max_drawdown, sortino_ratio, calmar_ratio)
 )
+
+####################### BENCHMARK #######################
+
+# Load benchmark data
+benchmark_df <- etf_df %>%
+  filter(Ticker == "SPY") %>%
+  select(Date, Benchmark_Return = Return) %>%
+  arrange(Date)
+
+# Calculate cumulative returns
+benchmark_df <- benchmark_df %>%
+  mutate(
+    Cum_Benchmark_Return = cumprod(1 + Benchmark_Return) - 1,
+    Benchmark_Index = 100 * (1 + Cum_Benchmark_Return)
+  ) %>%
+  select(-Cum_Benchmark_Return)
+
+# Calculate rolling drawdown
+benchmark_df <- benchmark_df %>%
+  mutate(
+    Roll_Max = cummax(Benchmark_Index),
+    Benchmark_Drawdown = (Benchmark_Index - Roll_Max) / Roll_Max
+  ) %>%
+  select(-Roll_Max)
+
+# Merge with backtest data
+backtest_df <- backtest_df %>%
+  left_join(benchmark_df, by = "Date")
+
+# Compute CAGR for benchmark
+start_value <- first(backtest_df$Benchmark_Index)
+end_value <- last(backtest_df$Benchmark_Index)
+benchmark_cagr <- ((end_value / start_value) ^ (252 / nrow(backtest_df))) - 1
+
+# Calculate annualized volatility for benchmark
+benchmark_vol <- sd(backtest_df$Benchmark_Return) * sqrt(252)
+
+# Compute Sharpe Ratio for benchmark
+benchmark_sharpe <- (benchmark_cagr - avg_annual_rfr) / benchmark_vol
+
+# Calculate max drawdown for benchmark
+benchmark_drawdown <- min(backtest_df$Benchmark_Drawdown)
+
+# Calculate Sortino Ratio for benchmark
+benchmark_neg_returns <- backtest_df$Benchmark_Return[backtest_df$Benchmark_Return < 0]
+benchmark_sortino <- (benchmark_cagr - avg_annual_rfr) / (sd(benchmark_neg_returns) * sqrt(252))
+
+# Calculate Calmar Ratio for benchmark
+benchmark_calmar <- benchmark_cagr / abs(benchmark_drawdown)
+
+# Combine benchmark performance metrics
+benchmark_performance_df <- data.frame(
+  Metric = c("CAGR", "Annualized Volatility", "Sharpe Ratio", "Max Drawdown", "Sortino Ratio", "Calmar Ratio"),
+  Benchmark = c(benchmark_cagr, benchmark_vol, benchmark_sharpe, benchmark_drawdown, benchmark_sortino, benchmark_calmar)
+)
+
+# Merge benchmark performance with portfolio performance
+performance_df <- performance_df %>%
+  left_join(benchmark_performance_df, by = "Metric")
+
 
 # Print performance metrics
 cat("\nPerformance Metrics:\n\n")
