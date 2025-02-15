@@ -98,7 +98,7 @@ backtest_df <- portfolio_df %>%
   ungroup()
 
 # Define start date for backtest
-start_date <- "2020-01-01"
+start_date <- "2018-01-01"
 backtest_df <- backtest_df %>%
   filter(Date >= start_date)
 cat("\nBacktest Start Date:", start_date, "\n")
