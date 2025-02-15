@@ -3,6 +3,7 @@ suppressMessages({
   library(RPostgres)
   library(jsonlite)
   library(dplyr)
+  library(tidyr)
   library(ggplot2)
 })
 
@@ -54,18 +55,17 @@ portfolio_df <- portfolio_df %>%
 
 # Define weights
 weights <- c(
-  "SPY" = 1 / 3,
+  "SPY" = 0.25,
   "QQQ" = 0,
-  "GLD" = 1 / 3,
+  "GLD" = 0.5,
   "SOXX" = 0,
-  "EFA" = 1 / 3,
+  "EFA" = 0.25,
   "AAPL" = 0,
   "MSFT" = 0,
   "AMZN" = 0,
   "GOOGL" = 0,
   "NVDA" = 0
 )
-
 
 # Convert to data frame
 weights_df <- data.frame(
@@ -114,4 +114,28 @@ backtest_df <- backtest_df %>%
     Drawdown = (Indexed_Return - Roll_Max) / Roll_Max
   )
 
-#! Pull bond data for RFR
+# Pull bond data and compute RFR
+bonds_df <- dbGetQuery(conn, "SELECT * FROM bonds") %>%
+  mutate(Annual_RFR = Yield / 100) %>%
+  select(Date, Annual_RFR)
+
+# Merge with backtest data
+backtest_df <- backtest_df %>%
+  left_join(bonds_df, by = "Date") %>%
+  arrange(Date) %>%
+  fill(Annual_RFR, .direction = "down") %>%
+  fill(Annual_RFR, .direction = "up")
+
+# Calculate CAGR
+start_value <- first(backtest_df$Indexed_Return)
+end_value <- last(backtest_df$Indexed_Return)
+cagr <- ((start_value / end_value) ^ (252 / nrow(backtest_df))) - 1
+
+# Calculate annualized volatility
+annual_vol <- sd(backtest_df$Portfolio_Return) * sqrt(252)
+
+# Compute avg RFR and convert to daily rate
+avg_annual_rfr <- mean(backtest_df$Annual_RFR)
+daily_rfr <- (1 + avg_annual_rfr) ^ (1 / 252) - 1
+
+# Calculate Sharpe Ratio
