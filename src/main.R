@@ -5,6 +5,7 @@ suppressMessages({
   library(dplyr)
   library(tidyr)
   library(ggplot2)
+  library(patchwork)
 })
 
 ###################### ASSET SELECTION & PRE-PROCESSING ######################
@@ -212,3 +213,32 @@ ggplot(backtest_df, aes(x = Date, y = Drawdown, color = Drawdown)) +
   ) +
   theme(plot.title = element_text(face = "bold", size = 14))
 ggsave(file.path(current_dir, "../plots/rolling_drawdown.png"))
+
+# Create the Indexed Return plot (upper panel)
+p1 <- ggplot(backtest_df, aes(x = Date, y = Indexed_Return)) +
+  geom_line(linewidth = 1) +
+  labs(
+    title = "Indexed Return Over Time",
+    x = "",
+    y = "Indexed Return"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "none"
+  )
+# Create the Rolling Drawdown plot (lower panel)
+p2 <- ggplot(backtest_df, aes(x = Date, y = Drawdown, color = Drawdown)) +
+  geom_line(linewidth = 0.75) +
+  scale_color_gradient(low = "red", high = "black") +
+  labs(
+    title = "Rolling Drawdown",
+    x = "Date",
+    y = "Drawdown",
+    color = "Drawdown"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14)
+  )
+# Combine the two plots vertically with patchwork
+combined_plot <- p1 / p2 + plot_layout(heights = c(3, 1))
+ggsave(file.path(current_dir, "../plots/combined_plot.png"))
