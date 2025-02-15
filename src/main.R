@@ -54,8 +54,8 @@ portfolio_df <- portfolio_df %>%
 
 ###################### STRATEGY ######################
 
-# Define weights
-weights <- c(
+# Define allocation
+allocation <- c(
   "SPY" = 0.25,
   "QQQ" = 0,
   "GLD" = 0.5,
@@ -69,14 +69,15 @@ weights <- c(
 )
 
 # Convert to data frame
-weights_df <- data.frame(
-  Ticker = names(weights),
-  Weight = as.numeric(weights)
+allocation_df <- data.frame(
+  Ticker = names(allocation),
+  Weight = as.numeric(allocation)
 )
+print(allocation_df)
 
-# Left join portfolio and weights
+# Left join portfolio and allocation
 portfolio_df <- portfolio_df %>%
-  left_join(weights_df, by = "Ticker") %>%
+  left_join(allocation_df, by = "Ticker") %>%
   filter(Weight > 0)
 
 ###################### BACKTEST ######################
@@ -187,7 +188,9 @@ ggplot(backtest_df, aes(x = Portfolio_Return)) +
     y = "Density"
   ) +
   theme(plot.title = element_text(face = "bold", size = 14))
-ggsave(file.path(current_dir, "../plots/returns_distribution.png"))
+suppressMessages({
+  ggsave(file.path(current_dir, "../plots/returns_distribution.png"))
+})
 
 # Plot the indexed return over time with color based on drawdown
 ggplot(backtest_df, aes(x = Date, y = Indexed_Return, color = Drawdown)) +
@@ -200,7 +203,9 @@ ggplot(backtest_df, aes(x = Date, y = Indexed_Return, color = Drawdown)) +
     color = "Drawdown"
   ) +
   theme(plot.title = element_text(face = "bold", size = 14))
-ggsave(file.path(current_dir, "../plots/indexed_return.png"))
+suppressMessages({
+  ggsave(file.path(current_dir, "../plots/indexed_return.png"))
+})
 
 # Plot the rolling drawdown
 ggplot(backtest_df, aes(x = Date, y = Drawdown, color = Drawdown)) +
@@ -212,7 +217,9 @@ ggplot(backtest_df, aes(x = Date, y = Drawdown, color = Drawdown)) +
     y = "Drawdown"
   ) +
   theme(plot.title = element_text(face = "bold", size = 14))
-ggsave(file.path(current_dir, "../plots/rolling_drawdown.png"))
+suppressMessages({
+  ggsave(file.path(current_dir, "../plots/rolling_drawdown.png"))
+})
 
 # Create the Indexed Return plot (upper panel)
 p1 <- ggplot(backtest_df, aes(x = Date, y = Indexed_Return)) +
@@ -241,4 +248,6 @@ p2 <- ggplot(backtest_df, aes(x = Date, y = Drawdown, color = Drawdown)) +
   )
 # Combine the two plots vertically with patchwork
 combined_plot <- p1 / p2 + plot_layout(heights = c(3, 1))
-ggsave(file.path(current_dir, "../plots/combined_plot.png"))
+suppressMessages({
+  ggsave(file.path(current_dir, "../plots/combined_plot.png"))
+})
