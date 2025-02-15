@@ -116,6 +116,7 @@ backtest_df <- backtest_df %>%
 
 # Pull bond data and compute RFR
 bonds_df <- dbGetQuery(conn, "SELECT * FROM bonds") %>%
+  filter(Ticker == "DGS3MO") %>%
   mutate(Annual_RFR = Yield / 100) %>%
   select(Date, Annual_RFR)
 
@@ -129,13 +130,29 @@ backtest_df <- backtest_df %>%
 # Calculate CAGR
 start_value <- first(backtest_df$Indexed_Return)
 end_value <- last(backtest_df$Indexed_Return)
-cagr <- ((start_value / end_value) ^ (252 / nrow(backtest_df))) - 1
+annual_return <- ((end_value / start_value) ^ (252 / nrow(backtest_df))) - 1
 
 # Calculate annualized volatility
 annual_vol <- sd(backtest_df$Portfolio_Return) * sqrt(252)
 
 # Compute avg RFR and convert to daily rate
 avg_annual_rfr <- mean(backtest_df$Annual_RFR)
-daily_rfr <- (1 + avg_annual_rfr) ^ (1 / 252) - 1
 
 # Calculate Sharpe Ratio
+sharpe_ratio <- (annual_return - avg_annual_rfr) / annual_vol
+
+# Calculate max drawdown
+max_drawdown <- min(backtest_df$Drawdown)
+
+# Calculate Sortino Ratio
+neg_returns <- backtest_df$Portfolio_Return[backtest_df$Portfolio_Return < 0]
+sortino_ratio <- (annual_return - avg_annual_rfr) / (sd(neg_returns) * sqrt(252))
+
+# Calculate Calmar Ratio
+calmar_ratio <- annual_return / abs(max_drawdown)
+
+# Combine performance metrics
+performance_df <- data.frame(
+  Metric = c("CAGR", "Annualized Volatility", "Sharpe Ratio", "Max Drawdown", "Sortino Ratio", "Calmar Ratio"),
+  Value = c(annual_return, annual_vol, sharpe_ratio, max_drawdown, sortino_ratio, calmar_ratio)
+)
