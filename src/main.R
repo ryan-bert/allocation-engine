@@ -56,11 +56,11 @@ portfolio_df <- portfolio_df %>%
 
 # Define allocation
 allocation <- c(
-  "SPY" = 0.25,
-  "QQQ" = 0,
-  "GLD" = 0.5,
+  "SPY" = 0,
+  "QQQ" = 0.6,
+  "GLD" = 0.4,
   "SOXX" = 0,
-  "EFA" = 0.25,
+  "EFA" = 0,
   "AAPL" = 0,
   "MSFT" = 0,
   "AMZN" = 0,
@@ -73,7 +73,12 @@ allocation_df <- data.frame(
   Ticker = names(allocation),
   Weight = as.numeric(allocation)
 )
-print(allocation_df)
+
+# Print allocation
+cat("Allocation:\n\n")
+allocation_df %>%
+  filter(Weight > 0) %>%
+  print()
 
 # Left join portfolio and allocation
 portfolio_df <- portfolio_df %>%
@@ -91,9 +96,10 @@ backtest_df <- portfolio_df %>%
   ungroup()
 
 # Define start date for backtest
-start_date <- min(backtest_df$Date)
+start_date <- "2018-01-01"
 backtest_df <- backtest_df %>%
   filter(Date >= start_date)
+cat("\nBacktest Start Date:", start_date, "\n")
 
 # Calculate cumulative returns
 backtest_df <- backtest_df %>%
@@ -158,6 +164,9 @@ performance_df <- data.frame(
   Metric = c("CAGR", "Annualized Volatility", "Sharpe Ratio", "Max Drawdown", "Sortino Ratio", "Calmar Ratio"),
   Value = c(annual_return, annual_vol, sharpe_ratio, max_drawdown, sortino_ratio, calmar_ratio)
 )
+
+# Print performance metrics
+cat("\nPerformance Metrics:\n\n")
 print(performance_df)
 
 ######################### PLOTS #########################
