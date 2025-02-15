@@ -96,7 +96,7 @@ backtest_df <- portfolio_df %>%
   ungroup()
 
 # Define start date for backtest
-start_date <- "2018-01-01"
+start_date <- "2000-01-01"
 backtest_df <- backtest_df %>%
   filter(Date >= start_date)
 cat("\nBacktest Start Date:", start_date, "\n")
@@ -104,12 +104,7 @@ cat("\nBacktest Start Date:", start_date, "\n")
 # Calculate cumulative returns
 backtest_df <- backtest_df %>%
   mutate(
-    Cumulative_Return = cumprod(1 + Portfolio_Return) - 1
-  )
-
-# Calculate indexed return
-backtest_df <- backtest_df %>%
-  mutate(
+    Cumulative_Return = cumprod(1 + Portfolio_Return) - 1,
     Indexed_Return = 100 * (1 + Cumulative_Return)
   ) %>%
   select(-Cumulative_Return)
@@ -172,6 +167,7 @@ performance_df <- data.frame(
 # Load benchmark data
 benchmark_df <- etf_df %>%
   filter(Ticker == "SPY") %>%
+  filter(Date >= start_date) %>%
   select(Date, Benchmark_Return = Return) %>%
   arrange(Date)
 
@@ -240,7 +236,7 @@ max_density <- max(density_data$y)
 
 # Plot the distribution of returns
 ggplot(backtest_df, aes(x = Portfolio_Return)) +
-  geom_density(fill = "#7b7b7b", alpha = 0.5, linewidth = 1) +
+  geom_density(fill = "#7b7b7b", alpha = 0.5) +
   geom_vline(
     xintercept = mean_return,
     linetype = "dashed",
@@ -248,7 +244,7 @@ ggplot(backtest_df, aes(x = Portfolio_Return)) +
   ) +
   annotate(
     "text",
-    x = mean_return + 0.01,
+    x = mean_return + 0.015,
     y = max_density,
     label = paste("Mean =", round(mean_return * 100, 2), "%"),
     vjust = -0.5
@@ -263,29 +259,32 @@ suppressMessages({
   ggsave(file.path(current_dir, "../plots/returns_distribution.png"))
 })
 
-# Plot the indexed return over time with color based on drawdown
-ggplot(backtest_df, aes(x = Date, y = Indexed_Return, color = Drawdown)) +
-  geom_line(linewidth = 1) +
-  scale_color_gradient(low = "red", high = "black") +
+# Plot the indexed return over time with benchmark comparison
+ggplot(backtest_df, aes(x = Date)) +
+  geom_line(aes(y = Benchmark_Index, color = "Benchmark")) +
+  geom_line(aes(y = Indexed_Return, color = "Portfolio")) +
+  scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
   labs(
     title = "Indexed Return Over Time",
     x = "Date",
     y = "Indexed Return",
-    color = "Drawdown"
+    color = "Legend"
   ) +
   theme(plot.title = element_text(face = "bold", size = 14))
 suppressMessages({
   ggsave(file.path(current_dir, "../plots/indexed_return.png"))
 })
 
-# Plot the rolling drawdown
-ggplot(backtest_df, aes(x = Date, y = Drawdown, color = Drawdown)) +
-  geom_line(linewidth = 0.75) +
-  scale_color_gradient(low = "red", high = "black") +
+# Plot the rolling drawdown with benchmark comparison
+ggplot(backtest_df, aes(x = Date)) +
+  geom_line(aes(y = Benchmark_Drawdown, color = "Benchmark"), linewidth = 0.75) +
+  geom_line(aes(y = Drawdown, color = "Portfolio"), linewidth = 0.75) +
+  scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
   labs(
     title = "Rolling Drawdown",
     x = "Date",
-    y = "Drawdown"
+    y = "Drawdown",
+    color = "Legend"
   ) +
   theme(plot.title = element_text(face = "bold", size = 14))
 suppressMessages({
@@ -293,26 +292,30 @@ suppressMessages({
 })
 
 # Create the Indexed Return plot (upper panel)
-p1 <- ggplot(backtest_df, aes(x = Date, y = Indexed_Return)) +
-  geom_line(linewidth = 1) +
+p1 <- ggplot(backtest_df, aes(x = Date)) +
+  geom_line(aes(y = Benchmark_Index, color = "Benchmark")) +
+  geom_line(aes(y = Indexed_Return, color = "Portfolio")) +
+  scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
   labs(
     title = "Indexed Return Over Time",
     x = "",
-    y = "Indexed Return"
+    y = "Indexed Return",
+    color = "Legend"
   ) +
   theme(
     plot.title = element_text(face = "bold", size = 14),
-    legend.position = "none"
+    legend.position = "top"
   )
 # Create the Rolling Drawdown plot (lower panel)
-p2 <- ggplot(backtest_df, aes(x = Date, y = Drawdown, color = Drawdown)) +
-  geom_line(linewidth = 0.75) +
-  scale_color_gradient(low = "red", high = "black") +
+p2 <- ggplot(backtest_df, aes(x = Date)) +
+  geom_line(aes(y = Benchmark_Drawdown, color = "Benchmark")) +
+  geom_line(aes(y = Drawdown, color = "Portfolio")) +
+  scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
   labs(
     title = "Rolling Drawdown",
     x = "Date",
     y = "Drawdown",
-    color = "Drawdown"
+    color = "Legend"
   ) +
   theme(
     plot.title = element_text(face = "bold", size = 14)
