@@ -156,3 +156,59 @@ performance_df <- data.frame(
   Metric = c("CAGR", "Annualized Volatility", "Sharpe Ratio", "Max Drawdown", "Sortino Ratio", "Calmar Ratio"),
   Value = c(annual_return, annual_vol, sharpe_ratio, max_drawdown, sortino_ratio, calmar_ratio)
 )
+print(performance_df)
+
+######################### PLOTS #########################
+
+# Compute the mean of returns and the density
+mean_return <- mean(backtest_df$Portfolio_Return, na.rm = TRUE)
+density_data <- density(backtest_df$Portfolio_Return, na.rm = TRUE)
+max_density <- max(density_data$y)
+
+# Plot the distribution of returns
+ggplot(backtest_df, aes(x = Portfolio_Return)) +
+  geom_density(fill = "#7b7b7b", alpha = 0.5, linewidth = 1) +
+  geom_vline(
+    xintercept = mean_return,
+    linetype = "dashed",
+    color = "red"
+  ) +
+  annotate(
+    "text",
+    x = mean_return + 0.01,
+    y = max_density,
+    label = paste("Mean =", round(mean_return * 100, 2), "%"),
+    vjust = -0.5
+  ) +
+  labs(
+    title = "Distribution of Portfolio Returns",
+    x = "Daily Return",
+    y = "Density"
+  ) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+ggsave(file.path(current_dir, "../plots/returns_distribution.png"))
+
+# Plot the indexed return over time with color based on drawdown
+ggplot(backtest_df, aes(x = Date, y = Indexed_Return, color = Drawdown)) +
+  geom_line(linewidth = 1) +
+  scale_color_gradient(low = "red", high = "black") +
+  labs(
+    title = "Indexed Return Over Time",
+    x = "Date",
+    y = "Indexed Return",
+    color = "Drawdown"
+  ) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+ggsave(file.path(current_dir, "../plots/indexed_return.png"))
+
+# Plot the rolling drawdown
+ggplot(backtest_df, aes(x = Date, y = Drawdown, color = Drawdown)) +
+  geom_line(linewidth = 0.75) +
+  scale_color_gradient(low = "red", high = "black") +
+  labs(
+    title = "Rolling Drawdown",
+    x = "Date",
+    y = "Drawdown"
+  ) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+ggsave(file.path(current_dir, "../plots/rolling_drawdown.png"))
