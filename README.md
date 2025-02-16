@@ -30,11 +30,9 @@ This project implements a modular portfolio backtesting engine in R, designed fo
    - Computes portfolio and benchmark drawdowns (`compute_drawdown()`).
    - Generates key plots:
 
-![indexed_return.png](plots/indexed_return.png)
-![rolling_drawdown.png](plots/rolling_drawdown.png)
+![combined_plot.png](plots/combined_plot.png)
 ![returns_distribution.png](plots/returns_distribution.png)
 ![scatter_plot.png](plots/scatter_plot.png)
-![combined_plot.png](plots/combined_plot.png)
 
 ## Key Benefits
 - **Modular & Reusable**: Swap in different strategy functions without modifying the engine.
