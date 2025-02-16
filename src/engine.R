@@ -124,10 +124,42 @@ analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
   calmar_ratio <- annual_return / abs(max_drawdown)
 
   # Combine performance metrics
-  performance_df <- data.frame(
+  if (is_benchmark) {
+    performance_df <- data.frame(
+    Metric = c("CAGR", "Annualized Volatility", "Sharpe Ratio", "Max Drawdown", "Sortino Ratio", "Calmar Ratio"),
+    Benchmark = c(annual_return, annual_vol, sharpe_ratio, max_drawdown, sortino_ratio, calmar_ratio)
+    )
+  } else {
+    performance_df <- data.frame(
     Metric = c("CAGR", "Annualized Volatility", "Sharpe Ratio", "Max Drawdown", "Sortino Ratio", "Calmar Ratio"),
     Portfolio = c(annual_return, annual_vol, sharpe_ratio, max_drawdown, sortino_ratio, calmar_ratio)
-  )
+    )
+  }
 
   return(performance_df)
+}
+
+include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
+
+  # Avoid "no visible binding for global variable" warnings
+  Ticker <- Date <- Return <- Benchmark_Return <- Cum_Benchmark_Return <- NULL
+
+  # Load benchmark data
+  benchmark_df <- benchmark_df %>%
+    filter(Ticker == benchmark_ticker) %>%
+    select(Date, Benchmark_Return = Return)
+
+  # Merge with backtest data
+  backtest_df <- backtest_df %>%
+    left_join(benchmark_df, by = "Date")
+
+  # Calculate cumulative returns
+  backtest_df <- backtest_df %>%
+    mutate(
+      Cum_Benchmark_Return = cumprod(1 + Benchmark_Return) - 1,
+      Benchmark_Index = 100 * (1 + Cum_Benchmark_Return)
+    ) %>%
+    select(-Cum_Benchmark_Return)
+
+  return(backtest_df)
 }

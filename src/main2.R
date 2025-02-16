@@ -104,6 +104,22 @@ backtest_df <- compute_drawdown(backtest_df)
 # Get performance metrics
 bonds_df <- dbGetQuery(conn, "SELECT * FROM bonds")
 performance_df <- analyse_performance(backtest_df, bonds_df)
+
+# Include benchmark to backtest
+benchmark_df <- dbGetQuery(conn, "SELECT * FROM etfs")
+backtest_df <- include_benchmark(backtest_df, benchmark_df, "SPY")
+
+# Compute rolling benchmark drawdown
+backtest_df <- compute_drawdown(backtest_df, is_benchmark = TRUE)
+
+# Get performance metrics for benchmark and combine
+performance_df <- analyse_performance(
+  backtest_df,
+  bonds_df,
+  is_benchmark = TRUE
+) %>%
+  left_join(performance_df, by = "Metric")
+
+# Print performance metrics
+cat("\nPerformance Metrics:\n\n")
 print(performance_df)
-
-
