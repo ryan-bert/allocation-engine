@@ -26,11 +26,12 @@ This project implements a modular portfolio backtesting engine in R, designed fo
 4. **Risk Analysis & Visualization**
    - Computes portfolio and benchmark drawdowns (`compute_drawdown()`).
    - Generates key plots:
-     - **Indexed Return Over Time** ![indexed_return.png](plots/indexed_return.png)
-     - **Rolling Drawdown** ![rolling_drawdown.png](plots/rolling_drawdown.png)
-     - **Returns Distribution** ![returns_distribution.png](plots/returns_distribution.png)
-     - **Portfolio vs. Benchmark Scatter Plot** ![scatter_plot.png](plots/scatter_plot.png)
-     - **Combined Indexed Return & Drawdown** ![combined_plot.png](plots/combined_plot.png)
+
+![indexed_return.png](plots/indexed_return.png)
+![rolling_drawdown.png](plots/rolling_drawdown.png)
+![returns_distribution.png](plots/returns_distribution.png)
+![scatter_plot.png](plots/scatter_plot.png)
+![combined_plot.png](plots/combined_plot.png)
 
 ## Key Benefits
 - **Modular & Reusable**: Swap in different strategy functions without modifying the engine.
