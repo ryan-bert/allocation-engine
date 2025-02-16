@@ -189,6 +189,10 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
 
 generate_plots <- function(backtest_df) {
 
+  # Avoid "no visible binding for global variable" warnings
+  Portfolio_Return <- Date <- Benchmark_Index <- Indexed_Return <- NULL
+  Benchmark_Drawdown <- Benchmark_Return <- Drawdown <- combined_plot <- NULL
+
   # Define the current directory
   current_dir <- dirname(sys.frame(1)$ofile)
 
@@ -287,7 +291,10 @@ generate_plots <- function(backtest_df) {
   # Combine the two plots vertically with patchwork
   combined_plot <- p1 / p2 + plot_layout(heights = c(3, 1))
   suppressMessages({
-    ggsave(file.path(current_dir, "../plots/combined_plot.png"))
+    ggsave(
+      file.path(current_dir, "../plots/combined_plot.png"),
+      plot = combined_plot
+    )
   })
 
   # Scatter plot of Portfolio vs Benchmark returns
