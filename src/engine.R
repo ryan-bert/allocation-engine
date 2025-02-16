@@ -5,6 +5,14 @@ suppressMessages({
   library(patchwork)
 })
 
+#' Align Dates in Portfolio Data
+#'
+#' This function aligns the start date of all tickers in a portfolio by setting
+#' the earliest common start date.
+#'
+#' @param portfolio_df A data frame containing portfolio data with columns: Ticker, Date, and Price.
+#'
+#' @return A filtered data frame with the aligned start date and no Price column.
 align_dates <- function(portfolio_df) {
 
   # Avoid "no visible binding for global variable" warnings
@@ -66,6 +74,14 @@ run_backtest <- function(portfolio_df, start_date) {
   return(backtest_df)
 }
 
+#' Compute Portfolio or Benchmark Drawdown
+#'
+#' This function calculates rolling drawdown for either the portfolio or a benchmark.
+#'
+#' @param backtest_df A data frame containing indexed return data.
+#' @param is_benchmark A logical value; if TRUE, computes benchmark drawdown. Default is FALSE (portfolio).
+#'
+#' @return A data frame with added drawdown columns.
 compute_drawdown <- function(backtest_df, is_benchmark = FALSE) {
 
   # Avoid "no visible binding for global variable" warnings
@@ -93,6 +109,15 @@ compute_drawdown <- function(backtest_df, is_benchmark = FALSE) {
   return(backtest_df)
 }
 
+#' Analyze Portfolio Performance
+#'
+#' Computes key performance metrics including CAGR, volatility, Sharpe ratio, drawdowns, Sortino ratio, and Calmar ratio.
+#'
+#' @param backtest_df A data frame with portfolio returns.
+#' @param bonds_df A data frame containing risk-free rate data.
+#' @param is_benchmark A logical value; if TRUE, computes benchmark performance.
+#'
+#' @return A data frame with key performance metrics.
 analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
 
   # Avoid "no visible binding for global variable" warnings
@@ -162,6 +187,16 @@ analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
   return(performance_df)
 }
 
+
+#' Include Benchmark in Backtest Data
+#'
+#' Merges benchmark data with backtest portfolio data.
+#'
+#' @param backtest_df A data frame with portfolio returns.
+#' @param benchmark_df A data frame with benchmark return data.
+#' @param benchmark_ticker The ticker symbol of the benchmark to include.
+#'
+#' @return A data frame with the merged benchmark data.
 include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
 
   # Avoid "no visible binding for global variable" warnings
@@ -187,6 +222,13 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
   return(backtest_df)
 }
 
+#' Generate Performance Plots
+#'
+#' Creates and saves plots for indexed returns, rolling drawdowns, return distributions, and portfolio vs. benchmark returns.
+#'
+#' @param backtest_df A data frame containing indexed return data.
+#'
+#' @return Saves multiple plots in the `../plots/` directory.
 generate_plots <- function(backtest_df) {
 
   # Avoid "no visible binding for global variable" warnings
