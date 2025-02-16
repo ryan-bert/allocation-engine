@@ -327,3 +327,17 @@ combined_plot <- p1 / p2 + plot_layout(heights = c(3, 1))
 suppressMessages({
   ggsave(file.path(current_dir, "../plots/combined_plot.png"))
 })
+
+# Scatter plot of Portfolio vs Benchmark returns
+ggplot(backtest_df, aes(x = Benchmark_Return, y = Portfolio_Return)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "red") +
+  labs(
+    title = "Portfolio vs Benchmark Returns",
+    x = "Benchmark Return",
+    y = "Portfolio Return"
+  ) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+suppressMessages({
+  ggsave(file.path(current_dir, "../plots/scatter_plot.png"))
+})
