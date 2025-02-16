@@ -52,7 +52,8 @@ start_date <- portfolio_df %>%
 
 # Filter data to start from maximum min date
 portfolio_df <- portfolio_df %>%
-  filter(Date >= start_date)
+  filter(Date >= start_date) %>%
+  select(-Price)
 
 ###################### STRATEGY ######################
 
