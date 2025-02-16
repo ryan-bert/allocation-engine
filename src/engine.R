@@ -1,7 +1,30 @@
 suppressMessages({
   library(dplyr)
   library(tidyr)
+  library(ggplot2)
+  library(patchwork)
 })
+
+align_dates <- function(portfolio_df) {
+
+  # Avoid "no visible binding for global variable" warnings
+  Ticker <- Date <- min_date <- Price <- NULL
+
+  # Get maximum min date
+  start_date <- portfolio_df %>%
+    group_by(Ticker) %>%
+    summarise(min_date = min(Date)) %>%
+    ungroup() %>%
+    summarise(max_min_date = max(min_date)) %>%
+    pull()
+
+  # Filter data to start from maximum min date
+  portfolio_df <- portfolio_df %>%
+    filter(Date >= start_date) %>%
+    select(-Price)
+
+  return(portfolio_df)
+}
 
 #' Run Portfolio Backtest
 #'
@@ -162,4 +185,122 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
     select(-Cum_Benchmark_Return)
 
   return(backtest_df)
+}
+
+generate_plots <- function(backtest_df) {
+
+  # Define the current directory
+  current_dir <- dirname(sys.frame(1)$ofile)
+
+
+  # Compute the mean of returns and the density
+  mean_return <- mean(backtest_df$Portfolio_Return, na.rm = TRUE)
+  density_data <- density(backtest_df$Portfolio_Return, na.rm = TRUE)
+  max_density <- max(density_data$y)
+
+  # Plot the distribution of returns
+  ggplot(backtest_df, aes(x = Portfolio_Return)) +
+    geom_density(fill = "#7b7b7b", alpha = 0.5) +
+    geom_vline(
+      xintercept = mean_return,
+      linetype = "dashed",
+      color = "red"
+    ) +
+    annotate(
+      "text",
+      x = mean_return + 0.015,
+      y = max_density,
+      label = paste("Mean =", round(mean_return * 100, 2), "%"),
+      vjust = -0.5
+    ) +
+    labs(
+      title = "Distribution of Portfolio Returns",
+      x = "Daily Return",
+      y = "Density"
+    ) +
+    theme(plot.title = element_text(face = "bold", size = 14))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/returns_distribution.png"))
+  })
+
+  # Plot the indexed return over time with benchmark comparison
+  ggplot(backtest_df, aes(x = Date)) +
+    geom_line(aes(y = Benchmark_Index, color = "Benchmark")) +
+    geom_line(aes(y = Indexed_Return, color = "Portfolio")) +
+    scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
+    labs(
+      title = "Indexed Return Over Time",
+      x = "Date",
+      y = "Indexed Return",
+      color = "Legend"
+    ) +
+    theme(plot.title = element_text(face = "bold", size = 14))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/indexed_return.png"))
+  })
+
+  # Plot the rolling drawdown with benchmark comparison
+  ggplot(backtest_df, aes(x = Date)) +
+    geom_line(aes(y = Benchmark_Drawdown, color = "Benchmark")) +
+    geom_line(aes(y = Drawdown, color = "Portfolio")) +
+    scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
+    labs(
+      title = "Rolling Drawdown",
+      x = "Date",
+      y = "Drawdown",
+      color = "Legend"
+    ) +
+    theme(plot.title = element_text(face = "bold", size = 14))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/rolling_drawdown.png"))
+  })
+
+  # Create the Indexed Return plot (upper panel)
+  p1 <- ggplot(backtest_df, aes(x = Date)) +
+    geom_line(aes(y = Benchmark_Index, color = "Benchmark")) +
+    geom_line(aes(y = Indexed_Return, color = "Portfolio")) +
+    scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
+    labs(
+      title = "Indexed Return Over Time",
+      x = "",
+      y = "Indexed Return",
+      color = "Legend"
+    ) +
+    theme(
+      plot.title = element_text(face = "bold", size = 14),
+      legend.position = "top"
+    )
+  # Create the Rolling Drawdown plot (lower panel)
+  p2 <- ggplot(backtest_df, aes(x = Date)) +
+    geom_line(aes(y = Benchmark_Drawdown, color = "Benchmark")) +
+    geom_line(aes(y = Drawdown, color = "Portfolio")) +
+    scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
+    labs(
+      title = "Rolling Drawdown",
+      x = "Date",
+      y = "Drawdown",
+      color = "Legend"
+    ) +
+    theme(
+      plot.title = element_text(face = "bold", size = 14)
+    )
+  # Combine the two plots vertically with patchwork
+  combined_plot <- p1 / p2 + plot_layout(heights = c(3, 1))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/combined_plot.png"))
+  })
+
+  # Scatter plot of Portfolio vs Benchmark returns
+  ggplot(backtest_df, aes(x = Benchmark_Return, y = Portfolio_Return)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", color = "red") +
+    labs(
+      title = "Portfolio vs Benchmark Returns",
+      x = "Benchmark Return",
+      y = "Portfolio Return"
+    ) +
+    theme(plot.title = element_text(face = "bold", size = 14))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/scatter_plot.png"))
+  })
 }
