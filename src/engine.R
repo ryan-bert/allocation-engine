@@ -38,4 +38,33 @@ run_backtest <- function(portfolio_df, start_date) {
       Indexed_Return = 100 * (1 + Cumulative_Return)
     ) %>%
     select(-Cumulative_Return)
+
+  return(backtest_df)
+}
+
+compute_drawdown <- function(backtest_df, is_benchmark = FALSE) {
+
+  # Avoid "no visible binding for global variable" warnings
+  Benchmark_Index <- Roll_Max <- Indexed_Return <- NULL
+
+  # Calculate rolling drawdown for BENCHMARK
+  if (is_benchmark) {
+    backtest_df <- backtest_df %>%
+      mutate(
+        Roll_Max = cummax(Benchmark_Index),
+        Benchmark_Drawdown = (Benchmark_Index - Roll_Max) / Roll_Max
+      ) %>%
+      select(-Roll_Max)
+  } else {
+
+    # Calculate rolling drawdown for PORTFOLIO
+    backtest_df <- backtest_df %>%
+      mutate(
+        Roll_Max = cummax(Indexed_Return),
+        Drawdown = (Indexed_Return - Roll_Max) / Roll_Max
+      ) %>%
+      select(-Roll_Max)
+  }
+
+  return(backtest_df)
 }
