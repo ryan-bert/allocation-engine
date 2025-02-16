@@ -16,12 +16,15 @@ This project implements a modular portfolio backtesting engine in R, designed fo
    - Computes portfolio returns and cumulative performance (`run_backtest()`).
    - Benchmarks portfolio performance against a reference index.
    - Calculates key financial metrics:
-     - **CAGR** (Compound Annual Growth Rate)
-     - **Annualized Volatility**
-     - **Sharpe Ratio**
-     - **Max Drawdown**
-     - **Sortino Ratio**
-     - **Calmar Ratio**
+```
+                 Metric  Portfolio  Benchmark
+1                  CAGR  0.1668597  0.1357409
+2 Annualized Volatility  0.1584333  0.1899841
+3          Sharpe Ratio  0.8974690  0.5846288
+4          Max Drawdown -0.2575635 -0.3371726
+5         Sortino Ratio  1.1669626  0.6956773
+6          Calmar Ratio  0.6478391  0.4025858
+```
 
 4. **Risk Analysis & Visualization**
    - Computes portfolio and benchmark drawdowns (`compute_drawdown()`).
