@@ -1,5 +1,6 @@
 suppressMessages({
   library(dplyr)
+  library(tidyr)
 })
 
 #' Run Portfolio Backtest
@@ -67,4 +68,66 @@ compute_drawdown <- function(backtest_df, is_benchmark = FALSE) {
   }
 
   return(backtest_df)
+}
+
+analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
+
+  # Avoid "no visible binding for global variable" warnings
+  Ticker <- Yield <- Date <- Annual_RFR <- NULL
+
+  # Define inputs based on is_benchmark
+  if (is_benchmark) {
+    indexed_returns <- backtest_df$Benchmark_Index
+    returns <- backtest_df$Benchmark_Return
+    rolling_drawdown <- backtest_df$Benchmark_Drawdown
+  } else {
+    indexed_returns <- backtest_df$Indexed_Return
+    returns <- backtest_df$Portfolio_Return
+    rolling_drawdown <- backtest_df$Drawdown
+  }
+
+  # Pull bond data and compute RFR
+  bonds_df <- bonds_df %>%
+    filter(Ticker == "DGS3MO") %>%
+    mutate(Annual_RFR = Yield / 100) %>%
+    select(Date, Annual_RFR)
+
+  # Merge with backtest data
+  backtest_df <- backtest_df %>%
+    left_join(bonds_df, by = "Date") %>%
+    arrange(Date) %>%
+    fill(Annual_RFR, .direction = "down") %>%
+    fill(Annual_RFR, .direction = "up")
+
+  # Calculate CAGR
+  start_value <- first(indexed_returns)
+  end_value <- last(indexed_returns)
+  annual_return <- ((end_value / start_value) ^ (252 / nrow(backtest_df))) - 1
+
+  # Calculate annualized volatility
+  annual_vol <- sd(returns) * sqrt(252)
+
+  # Compute avg RFR
+  avg_annual_rfr <- mean(backtest_df$Annual_RFR)
+
+  # Calculate Sharpe Ratio
+  sharpe_ratio <- (annual_return - avg_annual_rfr) / annual_vol
+
+  # Calculate max drawdown
+  max_drawdown <- min(rolling_drawdown)
+
+  # Calculate Sortino Ratio
+  neg_returns <- returns[returns < 0]
+  sortino_ratio <- (annual_return - avg_annual_rfr) / (sd(neg_returns) * sqrt(252))
+
+  # Calculate Calmar Ratio
+  calmar_ratio <- annual_return / abs(max_drawdown)
+
+  # Combine performance metrics
+  performance_df <- data.frame(
+    Metric = c("CAGR", "Annualized Volatility", "Sharpe Ratio", "Max Drawdown", "Sortino Ratio", "Calmar Ratio"),
+    Portfolio = c(annual_return, annual_vol, sharpe_ratio, max_drawdown, sortino_ratio, calmar_ratio)
+  )
+
+  return(performance_df)
 }

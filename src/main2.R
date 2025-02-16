@@ -93,7 +93,17 @@ portfolio_df <- portfolio_df %>%
   left_join(allocation_df, by = "Ticker") %>%
   filter(Weight > 0)
 
+####################################################
+
 # Run backtest to compute portfolio returns and value
-backtest_df <- run_backtest(portfolio_df, "2020-01-01")
+backtest_df <- run_backtest(portfolio_df, "2018-01-01")
+
+# Compute rolling portfolio drawdown
+backtest_df <- compute_drawdown(backtest_df)
+
+# Get performance metrics
+bonds_df <- dbGetQuery(conn, "SELECT * FROM bonds")
+performance_df <- analyse_performance(backtest_df, bonds_df)
+print(performance_df)
 
 
