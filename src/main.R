@@ -1,3 +1,5 @@
+rm(list = ls())
+
 suppressMessages({
   library(DBI)
   library(RPostgres)
