@@ -44,10 +44,10 @@ stocks_df <- stocks_df %>%
 # Combine the data
 portfolio_df <- bind_rows(stocks_df, etf_df)
 
+###################### STRATEGY ######################
+
 # Ensure all assets have the same date range
 portfolio_df <- align_dates(portfolio_df)
-
-###################### STRATEGY ######################
 
 portfolio_df <- apply_strategy(portfolio_df)
 
