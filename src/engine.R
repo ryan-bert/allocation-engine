@@ -3,6 +3,8 @@ suppressMessages({
   library(tidyr)
   library(ggplot2)
   library(patchwork)
+  library(lubridate)
+  library(scales)
 })
 
 #' Align Dates in Portfolio Data
@@ -28,8 +30,7 @@ align_dates <- function(portfolio_df) {
 
   # Filter data to start from maximum min date
   portfolio_df <- portfolio_df %>%
-    filter(Date >= start_date) %>%
-    select(-Price)
+    filter(Date >= start_date)
 
   return(portfolio_df)
 }
@@ -351,5 +352,73 @@ generate_plots <- function(backtest_df) {
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
     ggsave(file.path(current_dir, "../plots/scatter_plot.png"))
+  })
+
+  # Indexed returns on a log scale
+  ggplot(backtest_df, aes(x = Date)) +
+    geom_line(aes(y = Benchmark_Index, color = "Benchmark")) +
+    geom_line(aes(y = Indexed_Return, color = "Portfolio")) +
+    scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
+    scale_y_continuous(trans = 'log10', 
+                      labels = comma_format(accuracy = 1)) +
+    labs(title = "Log-Scale Indexed Returns",
+        x = "Date",
+        y = "Indexed Return (Log10)",
+        color = "Legend") +
+    theme(plot.title = element_text(face = "bold", size = 14))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/log_scale_returns.png"))
+  })
+
+  # Calculate monthly returns
+  monthly_returns <- backtest_df %>%
+    mutate(Month = floor_date(Date, "month")) %>%
+    group_by(Month) %>%
+    summarise(
+      Portfolio = prod(1 + Portfolio_Return) - 1,
+      Benchmark = prod(1 + Benchmark_Return) - 1
+    ) %>%
+    ungroup()
+
+  # Monthly returns scatter plot with quadratic trend line
+  ggplot(monthly_returns, aes(x = Benchmark, y = Portfolio)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", formula = y ~ poly(x, 2), 
+                color = "red", se = FALSE) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey") +
+    scale_x_continuous(labels = percent_format(accuracy = 1)) +
+    scale_y_continuous(labels = percent_format(accuracy = 1)) +
+    labs(title = "Monthly Returns: Portfolio vs Benchmark",
+        x = "Benchmark Monthly Return",
+        y = "Portfolio Monthly Return") +
+    theme(plot.title = element_text(face = "bold", size = 14))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/monthly_quadratic_scatter.png"))
+  })
+
+  # Calculate yearly returns
+  yearly_returns <- backtest_df %>%
+    mutate(Year = year(Date)) %>%
+    group_by(Year) %>%
+    summarise(
+      Portfolio = prod(1 + Portfolio_Return) - 1,
+      Benchmark = prod(1 + Benchmark_Return) - 1
+    ) %>%
+    ungroup()
+
+  # Yearly returns scatter plot with quadratic trend line
+  ggplot(yearly_returns, aes(x = Benchmark, y = Portfolio)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", formula = y ~ poly(x, 2), 
+                color = "red", se = FALSE) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey") +
+    scale_x_continuous(labels = percent_format(accuracy = 1)) +
+    scale_y_continuous(labels = percent_format(accuracy = 1)) +
+    labs(title = "Yearly Returns: Portfolio vs Benchmark",
+        x = "Benchmark Yearly Return",
+        y = "Portfolio Yearly Return") +
+    theme(plot.title = element_text(face = "bold", size = 14))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/yearly_quadratic_scatter.png"))
   })
 }
