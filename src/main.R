@@ -39,7 +39,7 @@ etf_df <- etf_df %>%
 
 # Stock selection
 stocks_df <- stocks_df %>%
-  filter(Ticker %in% c("AAPL", "MSFT", "AMZN", "GOOGL", "NVDA"))
+  filter(Ticker == "BRK-B")
 
 # Combine the data
 portfolio_df <- bind_rows(stocks_df, etf_df)
@@ -85,3 +85,4 @@ print(performance_df)
 
 # Generate plots
 generate_plots(backtest_df)
+plot_weights(portfolio_df, backtest_df)

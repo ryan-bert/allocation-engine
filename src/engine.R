@@ -422,3 +422,31 @@ generate_plots <- function(backtest_df) {
     ggsave(file.path(current_dir, "../plots/yearly_quadratic_scatter.png"))
   })
 }
+
+plot_weights <- function(portfolio_df, backtest_df) {
+
+  # Set date range to match backtest period
+  portfolio_df <- portfolio_df %>%
+    filter(Date >= min(backtest_df$Date) & Date <= max(backtest_df$Date))
+
+  # Determine the global min and max of weight
+  weight_min <- min(portfolio_df$Weight, na.rm = TRUE)
+  weight_max <- max(portfolio_df$Weight, na.rm = TRUE)
+
+  # Generate a list of plots for each ticker
+  weight_plots <- portfolio_df %>%
+    group_split(Ticker) %>%
+    lapply(function(df) {
+      ggplot(df, aes(x = Date, y = Weight)) +
+        geom_line(color = "blue") +
+        ylim(weight_min, weight_max) +  # Set consistent y-axis limits
+        labs(title = paste("Weight Over Time:", unique(df$Ticker)),
+             x = "Date", y = "Weight") +
+        theme_minimal()
+    })
+  # Combine all weight plots into a grid
+  stitched_weight_plot <- wrap_plots(weight_plots) + plot_layout(ncol = 2)
+  suppressMessages({
+    ggsave(file.path(current_dir, "plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
+  })
+}

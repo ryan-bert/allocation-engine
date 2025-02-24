@@ -10,15 +10,10 @@ apply_strategy <- function(portfolio_df) {
   # Define allocation
   allocation <- c(
     "SPY" = 0,
-    "QQQ" = 0.6,
-    "GLD" = 0.4,
+    "QQQ" = 0,
     "SOXX" = 0,
     "EFA" = 0,
-    "AAPL" = 0,
-    "MSFT" = 0,
-    "AMZN" = 0,
-    "GOOGL" = 0,
-    "NVDA" = 0
+    "BRK-B" = 1
   )
 
   # Convert to data frame
