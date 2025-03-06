@@ -54,7 +54,7 @@ portfolio_df <- apply_strategy(portfolio_df)
 ###################### BACKTEST ######################
 
 # Run backtest to compute portfolio returns and value
-backtest_df <- run_backtest(portfolio_df, "2018-01-01")
+backtest_df <- run_backtest(portfolio_df, "2018-01-01", "2021-01-01")
 
 # Compute rolling portfolio drawdown
 backtest_df <- compute_drawdown(backtest_df)

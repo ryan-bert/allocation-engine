@@ -46,7 +46,7 @@ align_dates <- function(portfolio_df) {
 #' the start date for the backtest.
 #'
 #' @return A data frame with columns: Date, Portfolio_Return, and Indexed_Return
-run_backtest <- function(portfolio_df, start_date) {
+run_backtest <- function(portfolio_df, start_date, end_date = Sys.Date()) {
 
   # Avoid "no visible binding for global variable" warnings
   Date <- Return <- Weight <- Portfolio_Return <- Cumulative_Return <- NULL
@@ -59,10 +59,10 @@ run_backtest <- function(portfolio_df, start_date) {
     ) %>%
     ungroup()
 
-  # Filter data to start date
+  # Filter data to start date and end date
   backtest_df <- backtest_df %>%
-    filter(Date >= start_date)
-  cat("\nBacktest Start Date:", start_date, "\n")
+    filter(Date >= start_date & Date <= end_date)
+  cat("\nBacktest Period:", start_date, " - ", end_date, "\n")
 
   # Calculate cumulative returns
   backtest_df <- backtest_df %>%
@@ -223,13 +223,41 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
   return(backtest_df)
 }
 
+plot_weights <- function(portfolio_df, backtest_df) {
+
+  # Set date range to match backtest period
+  portfolio_df <- portfolio_df %>%
+    filter(Date >= min(backtest_df$Date) & Date <= max(backtest_df$Date))
+
+  # Determine the global min and max of weight
+  weight_min <- min(portfolio_df$Weight, na.rm = TRUE)
+  weight_max <- max(portfolio_df$Weight, na.rm = TRUE)
+
+  # Generate a list of plots for each ticker
+  weight_plots <- portfolio_df %>%
+    group_split(Ticker) %>%
+    lapply(function(df) {
+      ggplot(df, aes(x = Date, y = Weight)) +
+        geom_line(color = "blue") +
+        ylim(weight_min, weight_max) +  # Set consistent y-axis limits
+        labs(title = paste("Weight Over Time:", unique(df$Ticker)),
+             x = "Date", y = "Weight") +
+        theme_minimal()
+    })
+  # Combine all weight plots into a grid
+  stitched_weight_plot <- wrap_plots(weight_plots) + plot_layout(ncol = 2)
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
+  })
+}
+
 #' Generate Performance Plots
 #'
 #' Creates and saves plots for indexed returns, rolling drawdowns, return distributions, and portfolio vs. benchmark returns.
 #'
 #' @param backtest_df A data frame containing indexed return data.
 #'
-#' @return Saves multiple plots in the `../plots/` directory.
+#' @return Saves multiple plots in the `plots/` directory.
 generate_plots <- function(backtest_df) {
 
   # Avoid "no visible binding for global variable" warnings
@@ -420,33 +448,5 @@ generate_plots <- function(backtest_df) {
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
     ggsave(file.path(current_dir, "../plots/yearly_quadratic_scatter.png"))
-  })
-}
-
-plot_weights <- function(portfolio_df, backtest_df) {
-
-  # Set date range to match backtest period
-  portfolio_df <- portfolio_df %>%
-    filter(Date >= min(backtest_df$Date) & Date <= max(backtest_df$Date))
-
-  # Determine the global min and max of weight
-  weight_min <- min(portfolio_df$Weight, na.rm = TRUE)
-  weight_max <- max(portfolio_df$Weight, na.rm = TRUE)
-
-  # Generate a list of plots for each ticker
-  weight_plots <- portfolio_df %>%
-    group_split(Ticker) %>%
-    lapply(function(df) {
-      ggplot(df, aes(x = Date, y = Weight)) +
-        geom_line(color = "blue") +
-        ylim(weight_min, weight_max) +  # Set consistent y-axis limits
-        labs(title = paste("Weight Over Time:", unique(df$Ticker)),
-             x = "Date", y = "Weight") +
-        theme_minimal()
-    })
-  # Combine all weight plots into a grid
-  stitched_weight_plot <- wrap_plots(weight_plots) + plot_layout(ncol = 2)
-  suppressMessages({
-    ggsave(file.path(current_dir, "plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
   })
 }
