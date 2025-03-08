@@ -63,7 +63,7 @@ run_backtest <- function(portfolio_df, start_date, end_date = Sys.Date()) {
   backtest_df <- backtest_df %>%
     filter(Date >= as.Date(start_date) & Date <= as.Date(end_date))
   
-  # Ensure min and max dates are correctly printed as dates
+  # Print backtest period
   cat("\nBacktest period: ", format(min(backtest_df$Date), "%Y-%m-%d"), "-", format(max(backtest_df$Date), "%Y-%m-%d"), "\n")
 
   # Calculate cumulative returns
@@ -225,6 +225,16 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
   return(backtest_df)
 }
 
+#' Plot Portfolio Weights Over Time
+#'
+#' This function generates and saves a set of time-series plots showing the evolution
+#' of portfolio weights for each asset in the portfolio.
+#'
+#' @param portfolio_df A data frame containing portfolio weights with columns:
+#' Date, Ticker, and Weight.
+#' @param backtest_df A data frame containing backtest data, used to match the date range.
+#'
+#' @return Saves a combined grid of weight plots in the `plots/` directory.
 plot_weights <- function(portfolio_df, backtest_df) {
 
   # Set date range to match backtest period
