@@ -35,10 +35,7 @@ align_dates <- function(portfolio_df) {
   return(portfolio_df)
 }
 
-apply_rebalancing <- function(portfolio_df, rebalance_freq = 50) {
-  
-  # Avoid "no visible binding for global variable" warnings
-  Weight <- Date <- Return <- Is_Rebalance <- Rebalance_Weight <- Rebalance_Price <- NULL
+apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
   
   # Get unique sorted dates
   unique_dates <- portfolio_df %>%
@@ -86,9 +83,9 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 50) {
   portfolio_df <- portfolio_df %>%
     group_by(Date) %>%
     mutate(Weight = Weight / sum(Weight, na.rm = TRUE)) %>%
-    ungroup()
+    ungroup() %>%
+    select(Date, Ticker, Return, Weight, Is_Rebalance)
 
-  View(portfolio_df)
   return(portfolio_df)
 }
 
