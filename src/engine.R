@@ -35,6 +35,63 @@ align_dates <- function(portfolio_df) {
   return(portfolio_df)
 }
 
+apply_rebalancing <- function(portfolio_df, rebalance_freq = 50) {
+  
+  # Avoid "no visible binding for global variable" warnings
+  Weight <- Date <- Return <- Is_Rebalance <- Rebalance_Weight <- Rebalance_Price <- NULL
+  
+  # Get unique sorted dates
+  unique_dates <- portfolio_df %>%
+    distinct(Date) %>%
+    arrange(Date) %>%
+    pull(Date)
+  
+  # Select every nth date as rebalance date
+  rebalance_dates <- unique_dates[seq(1, length(unique_dates), by = rebalance_freq)]
+  
+  # Mark rebalance days
+  portfolio_df <- portfolio_df %>%
+    mutate(Is_Rebalance = Date %in% rebalance_dates)
+  
+  # Sort by Date and Ticker
+  portfolio_df <- portfolio_df %>%
+    arrange(Date, Ticker)
+
+  # Store rebalance weights
+  portfolio_df <- portfolio_df %>%
+    group_by(Ticker) %>%
+    mutate(Rebalance_Weight = ifelse(Is_Rebalance, Weight, NA_real_)) %>%
+    fill(Rebalance_Weight, .direction = "down") %>%
+    ungroup()
+
+  # Store the date on rebalance days
+  portfolio_df <- portfolio_df %>%
+    group_by(Ticker) %>%
+    mutate(Rebalance_Date = ifelse(Is_Rebalance, Date, NA_real_)) %>%
+    fill(Rebalance_Date, .direction = "down") %>%
+    ungroup()
+
+  # Calculate cum returns since last rebalance for each ticker
+  portfolio_df <- portfolio_df %>%
+    group_by(Ticker, Rebalance_Date) %>%
+    mutate(
+      Return_Since_Rebalance = cumprod(1 + Return) - 1
+    )
+
+  # Compute actual weights based on return since rebalance
+  portfolio_df <- portfolio_df %>%
+    mutate(Weight = if_else(!Is_Rebalance, Rebalance_Weight * (1 + lag(Return_Since_Rebalance)), Rebalance_Weight))
+
+  # Normalize weights to ensure they sum to 1 each day
+  portfolio_df <- portfolio_df %>%
+    group_by(Date) %>%
+    mutate(Weight = Weight / sum(Weight, na.rm = TRUE)) %>%
+    ungroup()
+
+  View(portfolio_df)
+  return(portfolio_df)
+}
+
 #' Run Portfolio Backtest
 #'
 #' This function calculates portfolio returns and cumulative returns,

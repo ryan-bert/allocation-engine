@@ -51,10 +51,20 @@ portfolio_df <- align_dates(portfolio_df)
 
 portfolio_df <- apply_strategy(portfolio_df)
 
+###################### NUANCES ######################
+
+# Take rebalancing into account
+portfolio_df <- apply_rebalancing(portfolio_df)
+
+# Print NA weights 
+portfolio_df %>%
+  filter(is.na(Weight)) %>%
+  print()
+
 ###################### BACKTEST ######################
 
 # Run backtest to compute portfolio returns and value
-backtest_df <- run_backtest(portfolio_df, "1990-01-01", "2021-01-01")
+backtest_df <- run_backtest(portfolio_df, "1990-01-01", "2021-01-12")
 
 # Compute rolling portfolio drawdown
 backtest_df <- compute_drawdown(backtest_df)
