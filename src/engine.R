@@ -48,13 +48,26 @@ align_dates <- function(portfolio_df) {
 #'   - `Weight` (numeric): Adjusted portfolio weight.
 #'   - `Is_Rebalance` (logical): `TRUE` if rebalancing occurred.
 apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
+
+  # Print rebalance frequency
+  cat("\nRebalance frequency: ", rebalance_freq, "days\n")
   
   # Get unique sorted dates
   unique_dates <- portfolio_df %>%
     distinct(Date) %>%
     arrange(Date) %>%
     pull(Date)
-  
+
+  # Tickers must have a weight on every date (even if zero)
+  portfolio_df <- portfolio_df %>%
+    group_by(Ticker) %>%
+    complete(Date = unique_dates) %>%
+    ungroup() %>%
+    mutate(
+      Weight = if_else(is.na(Weight), 0, Weight),
+      Return = if_else(is.na(Return), 0, Return)
+    )
+
   # Select every nth date as rebalance date
   rebalance_dates <- unique_dates[seq(1, length(unique_dates), by = rebalance_freq)]
   
@@ -135,7 +148,6 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
   portfolio_df <- portfolio_df %>%
     mutate(Return = (1 + Return) * (1 - Tx_Cost) - 1)
 
-  View(portfolio_df)
   return(portfolio_df)
 }
 
