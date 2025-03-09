@@ -54,10 +54,10 @@ portfolio_df <- apply_strategy(portfolio_df)
 ###################### NUANCES ######################
 
 # Take rebalancing into account
-portfolio_df <- apply_rebalancing(portfolio_df, rebalance_freq = 1)
+portfolio_df <- apply_rebalancing(portfolio_df, rebalance_freq = 22)
 
 # Apply transaction fees
-portfolio_df <- apply_fees(portfolio_df)
+portfolio_df <- apply_fees(portfolio_df, tx_fee = 0.007)
 
 ###################### BACKTEST ######################
 
