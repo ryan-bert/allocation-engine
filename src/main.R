@@ -59,8 +59,6 @@ portfolio_df <- apply_rebalancing(portfolio_df, rebalance_freq = 1)
 # Apply transaction fees
 portfolio_df <- apply_fees(portfolio_df)
 
-sum(portfolio_df$Fee)
-
 ###################### BACKTEST ######################
 
 # Run backtest to compute portfolio returns and value

@@ -17,9 +17,6 @@ suppressMessages({
 #' @return A filtered data frame with the aligned start date and no Price column.
 align_dates <- function(portfolio_df) {
 
-  # Avoid "no visible binding for global variable" warnings
-  Ticker <- Date <- min_date <- Price <- NULL
-
   # Get maximum min date
   start_date <- portfolio_df %>%
     group_by(Ticker) %>%
@@ -104,6 +101,44 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
   return(portfolio_df)
 }
 
+#' Apply Transaction Fees to Portfolio Returns
+#'
+#' Adjusts portfolio returns to account for transaction costs incurred on rebalancing days.
+#'
+#' @param portfolio_df A data frame containing portfolio data with columns: Date, Ticker, Return, and Weight.
+#' @param tx_fee Numeric, transaction fee rate (default: 0.001 or 0.1% per rebalance trade).
+#'
+#' @return A data frame with transaction costs applied to returns.
+apply_fees <- function(portfolio_df, tx_fee = 0.001) {
+
+  # Calculate real weight on rebalance days
+  portfolio_df <- portfolio_df %>%
+    group_by(Ticker) %>%
+    mutate(Real_Weight = ifelse(
+      Is_Rebalance,
+      lag(Weight, default = 0) * lag(1 + Return, default = 1),
+      Weight
+    ))
+
+  # Calculate transaction costs on rebalance days
+  portfolio_df <- portfolio_df %>%
+    group_by(Ticker) %>%
+    mutate(Tx_Cost = ifelse(
+      Is_Rebalance,
+      abs(Real_Weight - Weight) * tx_fee,
+      0
+    )) %>%
+    ungroup() %>%
+    select(-Real_Weight)
+
+  # Adjust returns for transaction costs
+  portfolio_df <- portfolio_df %>%
+    mutate(Return = (1 + Return) * (1 - Tx_Cost) - 1)
+
+  View(portfolio_df)
+  return(portfolio_df)
+}
+
 #' Run Portfolio Backtest
 #'
 #' This function calculates portfolio returns and cumulative returns,
@@ -116,9 +151,6 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
 #'
 #' @return A data frame with columns: Date, Portfolio_Return, and Indexed_Return
 run_backtest <- function(portfolio_df, start_date, end_date = Sys.Date()) {
-
-  # Avoid "no visible binding for global variable" warnings
-  Date <- Return <- Weight <- Portfolio_Return <- Cumulative_Return <- NULL
 
   # Calculate portfolio returns
   backtest_df <- portfolio_df %>%
@@ -191,9 +223,6 @@ compute_drawdown <- function(backtest_df, is_benchmark = FALSE) {
 #'
 #' @return A data frame with key performance metrics.
 analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
-
-  # Avoid "no visible binding for global variable" warnings
-  Ticker <- Yield <- Date <- Annual_RFR <- NULL
 
   # Define inputs based on is_benchmark
   if (is_benchmark) {
@@ -271,9 +300,6 @@ analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
 #' @return A data frame with the merged benchmark data.
 include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
 
-  # Avoid "no visible binding for global variable" warnings
-  Ticker <- Date <- Return <- Benchmark_Return <- Cum_Benchmark_Return <- NULL
-
   # Load benchmark data
   benchmark_df <- benchmark_df %>%
     filter(Ticker == benchmark_ticker) %>%
@@ -340,10 +366,6 @@ plot_weights <- function(portfolio_df, backtest_df) {
 #'
 #' @return Saves multiple plots in the `plots/` directory.
 generate_plots <- function(backtest_df) {
-
-  # Avoid "no visible binding for global variable" warnings
-  Portfolio_Return <- Date <- Benchmark_Index <- Indexed_Return <- NULL
-  Benchmark_Drawdown <- Benchmark_Return <- Drawdown <- combined_plot <- NULL
 
   # Define the current directory
   current_dir <- dirname(sys.frame(1)$ofile)
