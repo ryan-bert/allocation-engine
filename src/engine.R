@@ -35,6 +35,21 @@ align_dates <- function(portfolio_df) {
   return(portfolio_df)
 }
 
+#' Apply Portfolio Rebalancing
+#'
+#' Adjusts portfolio weights based on a specified rebalancing frequency, allowing weights 
+#' to drift with returns between rebalancing dates.
+#'
+#' @param portfolio_df A data frame containing portfolio data with
+#' columns: Date, Return, and Weight.
+#' @param rebalance_freq Integer specifying rebalancing frequency in days (default: `5`).
+#'
+#' @return A data frame with updated weights, containing:
+#'   - `Date` (Date): Observation date.
+#'   - `Ticker` (character): Asset identifier.
+#'   - `Return` (numeric): Daily asset return.
+#'   - `Weight` (numeric): Adjusted portfolio weight.
+#'   - `Is_Rebalance` (logical): `TRUE` if rebalancing occurred.
 apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
   
   # Get unique sorted dates
