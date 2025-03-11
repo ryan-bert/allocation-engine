@@ -124,6 +124,9 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
 #' @return A data frame with transaction costs applied to returns.
 apply_fees <- function(portfolio_df, tx_fee = 0.001) {
 
+  # Print transaction fee
+  cat("Transaction fee: ", tx_fee * 100, "%\n")
+
   # Calculate real weight on rebalance days
   portfolio_df <- portfolio_df %>%
     group_by(Ticker) %>%
