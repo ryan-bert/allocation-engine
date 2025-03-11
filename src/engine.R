@@ -126,7 +126,7 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
 apply_fees <- function(portfolio_df, tx_fee = 0.001) {
 
   # Print transaction fee
-  cat("Transaction fee: ", tx_fee * 100, "%\n")
+  cat(paste0("Transaction fee:  ", tx_fee * 100, "%\n"))
 
   # Calculate real weight on rebalance days
   portfolio_df <- portfolio_df %>%
@@ -381,44 +381,6 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
   return(backtest_df)
 }
 
-#' Plot Portfolio Weights Over Time
-#'
-#' This function generates and saves a set of time-series plots showing the evolution
-#' of portfolio weights for each asset in the portfolio.
-#'
-#' @param portfolio_df A data frame containing portfolio weights with columns:
-#' Date, Ticker, and Weight.
-#' @param backtest_df A data frame containing backtest data, used to match the date range.
-#'
-#' @return Saves a combined grid of weight plots in the `plots/` directory.
-plot_weights <- function(portfolio_df, backtest_df) {
-
-  # Set date range to match backtest period
-  portfolio_df <- portfolio_df %>%
-    filter(Date >= min(backtest_df$Date) & Date <= max(backtest_df$Date))
-
-  # Determine the global min and max of weight
-  weight_min <- min(portfolio_df$Weight, na.rm = TRUE)
-  weight_max <- max(portfolio_df$Weight, na.rm = TRUE)
-
-  # Generate a list of plots for each ticker
-  weight_plots <- portfolio_df %>%
-    group_split(Ticker) %>%
-    lapply(function(df) {
-      ggplot(df, aes(x = Date, y = Weight)) +
-        geom_line(color = "blue") +
-        ylim(weight_min, weight_max) +  # Set consistent y-axis limits
-        labs(title = paste("Weight Over Time:", unique(df$Ticker)),
-             x = "Date", y = "Weight") +
-        theme_minimal()
-    })
-  # Combine all weight plots into a grid
-  stitched_weight_plot <- wrap_plots(weight_plots) + plot_layout(ncol = 2)
-  suppressMessages({
-    ggsave(file.path(current_dir, "../plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
-  })
-}
-
 #' Generate Performance Plots
 #'
 #' Creates and saves plots for indexed returns, rolling drawdowns, return distributions, and portfolio vs. benchmark returns.
@@ -537,6 +499,24 @@ generate_plots <- function(backtest_df) {
     )
   })
 
+  # Calculate the performance ratio
+  backtest_df <- backtest_df %>%
+    mutate(Performance_Ratio = Indexed_Return / Benchmark_Index) %>%
+    as.data.frame()
+
+  # Plot the performance ratio
+  ggplot(backtest_df, aes(x = Date, y = Performance_Ratio)) +
+    geom_line(color = "blue") +
+    labs(
+      title = "Portfolio vs. Benchmark Performance Ratio",
+      x = "Date",
+      y = "Performance Ratio"
+    ) +
+    theme(plot.title = element_text(face = "bold", size = 14))
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/performance_ratio.png"))
+  })
+
   # Scatter plot of Portfolio vs Benchmark returns
   ggplot(backtest_df, aes(x = Benchmark_Return, y = Portfolio_Return)) +
     geom_point(alpha = 0.5) +
@@ -601,5 +581,43 @@ generate_plots <- function(backtest_df) {
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
     ggsave(file.path(current_dir, "../plots/yearly_quadratic_scatter.png"))
+  })
+}
+
+#' Plot Portfolio Weights Over Time
+#'
+#' This function generates and saves a set of time-series plots showing the evolution
+#' of portfolio weights for each asset in the portfolio.
+#'
+#' @param portfolio_df A data frame containing portfolio weights with columns:
+#' Date, Ticker, and Weight.
+#' @param backtest_df A data frame containing backtest data, used to match the date range.
+#'
+#' @return Saves a combined grid of weight plots in the `plots/` directory.
+plot_weights <- function(portfolio_df, backtest_df) {
+
+  # Set date range to match backtest period
+  portfolio_df <- portfolio_df %>%
+    filter(Date >= min(backtest_df$Date) & Date <= max(backtest_df$Date))
+
+  # Determine the global min and max of weight
+  weight_min <- min(portfolio_df$Weight, na.rm = TRUE)
+  weight_max <- max(portfolio_df$Weight, na.rm = TRUE)
+
+  # Generate a list of plots for each ticker
+  weight_plots <- portfolio_df %>%
+    group_split(Ticker) %>%
+    lapply(function(df) {
+      ggplot(df, aes(x = Date, y = Weight)) +
+        geom_line(color = "blue") +
+        ylim(weight_min, weight_max) +  # Set consistent y-axis limits
+        labs(title = paste("Weight Over Time:", unique(df$Ticker)),
+             x = "Date", y = "Weight") +
+        theme_minimal()
+    })
+  # Combine all weight plots into a grid
+  stitched_weight_plot <- wrap_plots(weight_plots) + plot_layout(ncol = 2)
+  suppressMessages({
+    ggsave(file.path(current_dir, "../plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
   })
 }
