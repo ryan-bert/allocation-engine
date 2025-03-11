@@ -178,9 +178,6 @@ run_backtest <- function(portfolio_df, start_date, end_date = Sys.Date()) {
   # Filter data to start date and end date
   backtest_df <- backtest_df %>%
     filter(Date >= as.Date(start_date) & Date <= as.Date(end_date))
-  
-  # Print backtest period
-  cat("\nBacktest period: ", format(min(backtest_df$Date), "%Y-%m-%d"), "-", format(max(backtest_df$Date), "%Y-%m-%d"), "\n")
 
   # Calculate cumulative returns
   backtest_df <- backtest_df %>%
@@ -314,6 +311,12 @@ analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
 #'
 #' @return A data frame with the merged benchmark data.
 include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
+
+  # Print benchmark
+  cat("Benchmark: ", benchmark_ticker, "\n")
+
+  # Print backtest period
+  cat("\nBacktest period: ", format(min(backtest_df$Date), "%Y-%m-%d"), "-", format(max(backtest_df$Date), "%Y-%m-%d"), "\n")
 
   # Load benchmark data
   benchmark_df <- benchmark_df %>%
