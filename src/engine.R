@@ -5,6 +5,7 @@ suppressMessages({
   library(patchwork)
   library(lubridate)
   library(scales)
+  library(stringr)
 })
 
 #' Align Dates in Portfolio Data
@@ -200,9 +201,6 @@ run_backtest <- function(portfolio_df, start_date, end_date = Sys.Date()) {
 #' @return A data frame with added drawdown columns.
 compute_drawdown <- function(backtest_df, is_benchmark = FALSE) {
 
-  # Avoid "no visible binding for global variable" warnings
-  Benchmark_Index <- Roll_Max <- Indexed_Return <- NULL
-
   # Calculate rolling drawdown for BENCHMARK
   if (is_benchmark) {
     backtest_df <- backtest_df %>%
@@ -318,14 +316,59 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
   # Print backtest period
   cat("\nBacktest period: ", format(min(backtest_df$Date), "%Y-%m-%d"), "-", format(max(backtest_df$Date), "%Y-%m-%d"), "\n")
 
-  # Load benchmark data
-  benchmark_df <- benchmark_df %>%
-    filter(Ticker == benchmark_ticker) %>%
-    select(Date, Benchmark_Return = Return)
+  # Load benchmark data (no formula)
+  if(!str_detect(benchmark_ticker, "\\+")) {
+    benchmark_df <- benchmark_df %>%
+      filter(Ticker == benchmark_ticker) %>%
+      select(Date, Benchmark_Return = Return)
+
+  # Load data according to formula
+  } else {
+
+    # Parse benchmark formula (eg "0.6*SPY + 0.4*TLT")
+    benchmark_components <- str_split(benchmark_ticker, " \\+ ", simplify = TRUE)
+
+    # Extract tickers and weights
+    parsed_components <- lapply(benchmark_components, function(component) {
+      parts <- str_split(component, "\\*", simplify = TRUE)
+      weight <- as.numeric(parts[1])
+      ticker <- parts[2]
+      return(data.frame(Ticker = ticker, Weight = weight, stringsAsFactors = FALSE))
+    })
+
+    # Convert list to data frame
+    parsed_components <- bind_rows(parsed_components)
+
+    # Left join to benchmark data
+    benchmark_df <- benchmark_df %>%
+      filter(Ticker %in% parsed_components$Ticker) %>%
+      left_join(parsed_components, by = "Ticker")
+
+    # Get maximum min-date
+    min_date <- benchmark_df %>%
+      group_by(Ticker) %>%
+      summarise(Min_Date = min(Date)) %>%
+      summarise(Min_Date = max(Min_Date)) %>%
+      pull(Min_Date)
+
+    # Filter dates such that benchmark assets have same date range
+    benchmark_df <- benchmark_df %>%
+      filter(Date >= min_date)
+
+    # Apply weights to benchmark data
+    benchmark_df <- benchmark_df %>%
+      group_by(Date) %>%
+      mutate(Benchmark_Return = sum(Return * Weight))
+  }
 
   # Merge with backtest data
   backtest_df <- backtest_df %>%
     left_join(benchmark_df, by = "Date")
+
+  # Check for missing benchmark data
+  if (any(is.na(backtest_df$Benchmark_Return))) {
+    cat("Warning: Missing benchmark data for some dates\n")
+  }
 
   # Calculate cumulative returns
   backtest_df <- backtest_df %>%
