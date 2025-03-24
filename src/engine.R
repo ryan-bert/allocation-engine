@@ -408,7 +408,7 @@ density_df <- backtest_df %>%
   drop_na()
 
 # Plot the distribution of daily returns
-ggplot(density_df, aes(x = Return, fill = Return_Type, color = Return_Type)) +
+ggplot(density_df, aes(x = Return, fill = Ticker, color = Ticker)) +
   geom_density(alpha = 0.3) +
   scale_fill_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
   scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
