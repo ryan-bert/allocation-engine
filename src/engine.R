@@ -103,12 +103,16 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
 
   # Compute actual weights based on return since rebalance
   portfolio_df <- portfolio_df %>%
-    mutate(Weight = if_else(!Is_Rebalance, Rebalance_Weight * (1 + lag(Return_Since_Rebalance)), Rebalance_Weight))
+    mutate(Weight = if_else(
+      !Is_Rebalance,
+      Rebalance_Weight * (1 + lag(Return_Since_Rebalance)),
+      Rebalance_Weight
+  ))
 
   # Normalize weights to ensure they sum to 1 each day
   portfolio_df <- portfolio_df %>%
     group_by(Date) %>%
-    mutate(Weight = Weight / sum(Weight, na.rm = TRUE)) %>%
+    mutate(Weight = Weight / sum(abs(Weight), na.rm = TRUE)) %>%
     ungroup() %>%
     select(Date, Ticker, Return, Weight, Is_Rebalance)
 
