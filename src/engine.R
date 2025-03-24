@@ -397,35 +397,32 @@ generate_plots <- function(backtest_df) {
   # Define the current directory
   current_dir <- dirname(sys.frame(1)$ofile)
 
-  # Compute the mean of returns and the density
-  mean_return <- mean(backtest_df$Portfolio_Return, na.rm = TRUE)
-  density_data <- density(backtest_df$Portfolio_Return, na.rm = TRUE)
-  max_density <- max(density_data$y)
+# Pivot the data to long-form
+density_df <- backtest_df %>%
+  select(Date, Portfolio = Portfolio_Return, Benchmark = Benchmark_Return) %>%
+  pivot_longer(
+    cols = c(Portfolio, Benchmark),
+    names_to = "Ticker",
+    values_to = "Return"
+  ) %>%
+  drop_na()
 
-  # Plot the distribution of returns
-  ggplot(backtest_df, aes(x = Portfolio_Return)) +
-    geom_density(fill = "#7b7b7b", alpha = 0.5) +
-    geom_vline(
-      xintercept = mean_return,
-      linetype = "dashed",
-      color = "blue"
-    ) +
-    annotate(
-      "text",
-      x = mean_return + 0.015,
-      y = max_density,
-      label = paste("Mean =", round(mean_return * 100, 2), "%"),
-      vjust = -0.5
-    ) +
-    labs(
-      title = "Distribution of Portfolio Returns",
-      x = "Daily Return",
-      y = "Density"
-    ) +
-    theme(plot.title = element_text(face = "bold", size = 14))
-  suppressMessages({
-    ggsave(file.path(current_dir, "plots/returns_distribution.png"))
-  })
+# Plot the distribution of daily returns
+ggplot(density_df, aes(x = Return, fill = Return_Type, color = Return_Type)) +
+  geom_density(alpha = 0.3) +
+  scale_fill_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
+  scale_color_manual(values = c("Portfolio" = "blue", "Benchmark" = "black")) +
+  labs(
+    title = "Distribution of Daily Returns",
+    x = "Daily Return",
+    y = "Density",
+    fill = "Ticker",
+    color = "Ticker"
+  ) +
+  theme(plot.title = element_text(face = "bold", size = 14))
+suppressMessages({
+  ggsave(file.path(current_dir, "plots/returns_distribution.png"))
+})
 
   # Plot the rolling drawdown with benchmark comparison
   ggplot(backtest_df, aes(x = Date)) +
