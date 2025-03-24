@@ -141,6 +141,16 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
       Weight
     ))
 
+  # Normalise real weights
+  portfolio_df <- portfolio_df %>%
+    group_by(Date) %>%
+    mutate(
+      Total_Weight = sum(abs(Real_Weight)),
+      Real_Weight = if_else(Total_Weight == 0, 0, Real_Weight / Total_Weight)
+    ) %>%
+    ungroup() %>%
+    select(-Total_Weight)
+
   # Calculate transaction costs on rebalance days
   portfolio_df <- portfolio_df %>%
     group_by(Ticker) %>%
