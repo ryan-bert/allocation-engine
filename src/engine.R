@@ -420,7 +420,7 @@ generate_plots <- function(backtest_df) {
     ) +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "../plots/returns_distribution.png"))
+    ggsave(file.path(current_dir, "plots/returns_distribution.png"))
   })
 
   # Plot the rolling drawdown with benchmark comparison
@@ -436,7 +436,7 @@ generate_plots <- function(backtest_df) {
     ) +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "../plots/rolling_drawdown.png"))
+    ggsave(file.path(current_dir, "plots/rolling_drawdown.png"))
   })
 
   # Create the Indexed Return plot (upper panel)
@@ -473,7 +473,7 @@ generate_plots <- function(backtest_df) {
   combined_plot <- p1 / p2 + plot_layout(heights = c(3, 1))
   suppressMessages({
     ggsave(
-      file.path(current_dir, "../plots/indexed_return.png"),
+      file.path(current_dir, "plots/indexed_return.png"),
       plot = combined_plot
     )
   })
@@ -494,7 +494,7 @@ generate_plots <- function(backtest_df) {
   combined_log <- log_plot / p2 + plot_layout(heights = c(3, 1))
   suppressMessages({
     ggsave(
-      file.path(current_dir, "../plots/log_indexed_return.png"),
+      file.path(current_dir, "plots/log_indexed_return.png"),
       plot = combined_log
     )
   })
@@ -514,7 +514,7 @@ generate_plots <- function(backtest_df) {
     ) +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "../plots/performance_ratio.png"))
+    ggsave(file.path(current_dir, "plots/performance_ratio.png"))
   })
 
   # Scatter plot of Portfolio vs Benchmark returns
@@ -528,7 +528,7 @@ generate_plots <- function(backtest_df) {
     ) +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "../plots/scatter_plot.png"))
+    ggsave(file.path(current_dir, "plots/scatter_plot.png"))
   })
 
   # Calculate monthly returns
@@ -554,7 +554,7 @@ generate_plots <- function(backtest_df) {
         y = "Portfolio Monthly Return") +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "../plots/monthly_quadratic_scatter.png"))
+    ggsave(file.path(current_dir, "plots/monthly_quadratic_scatter.png"))
   })
 
   # Calculate yearly returns
@@ -580,7 +580,7 @@ generate_plots <- function(backtest_df) {
         y = "Portfolio Yearly Return") +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "../plots/yearly_quadratic_scatter.png"))
+    ggsave(file.path(current_dir, "plots/yearly_quadratic_scatter.png"))
   })
 }
 
@@ -618,6 +618,6 @@ plot_weights <- function(portfolio_df, backtest_df) {
   # Combine all weight plots into a grid
   stitched_weight_plot <- wrap_plots(weight_plots) + plot_layout(ncol = 2)
   suppressMessages({
-    ggsave(file.path(current_dir, "../plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
+    ggsave(file.path(current_dir, "plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
   })
 }
