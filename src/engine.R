@@ -605,6 +605,26 @@ plot_weights <- function(portfolio_df, backtest_df) {
   weight_min <- min(portfolio_df$Weight, na.rm = TRUE)
   weight_max <- max(portfolio_df$Weight, na.rm = TRUE)
 
+  # Identify tickers with only-zero weights
+  invalid_tickers <- portfolio_df %>%
+    group_by(Ticker) %>%
+    summarise(Weight_Sum = sum(Weight)) %>%
+    filter(Weight_Sum == 0) %>%
+    pull(Ticker)
+
+  # Identify tickers with only NA weights
+  invalid_tickers <- portfolio_df %>%
+    group_by(Ticker) %>%
+    arrange(Date) %>%
+    summarise(All_NA = all(is.na(Weight))) %>%
+    filter(All_NA) %>%
+    pull(Ticker) %>%
+    union(invalid_tickers)
+
+  # Filter out invalid tickers
+  portfolio_df <- portfolio_df %>%
+    filter(!Ticker %in% invalid_tickers)
+
   # Generate a list of plots for each ticker
   weight_plots <- portfolio_df %>%
     group_split(Ticker) %>%
