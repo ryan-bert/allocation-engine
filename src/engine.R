@@ -652,3 +652,35 @@ plot_weights <- function(portfolio_df, backtest_df) {
     ggsave(file.path(current_dir, "plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
   })
 }
+
+
+#' Save Strategy to Database
+#'
+#' This function saves the strategy data to the database for further analysis.
+#'
+#' @param conn A database connection object.
+#' @param backtest_df A data frame containing backtest data with columns: Date, Portfolio_Return, and Indexed_Return.
+#' @param name A character string specifying the strategy name (default: "TEMP_STRATEGY").
+#'
+#' @return Saves the strategy data to the database.
+save_strategy <- function(conn, backtest_df, name = "TEMP_STRATEGY") {
+
+  # Convert data to "asset-form"
+  strategy_df <- backtest_df %>%
+    mutate(Ticker = name) %>%
+    select(
+      Date,
+      Ticker,
+      Price = Indexed_Return,
+      Return = Portfolio_Return
+    )
+
+  # Overwrite strategy to the database
+  dbWriteTable(
+    conn,
+    "strategies_temp",
+    strategy_df,
+    overwrite = TRUE,
+    append = FALSE
+  )
+}
