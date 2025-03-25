@@ -675,11 +675,22 @@ save_strategy <- function(conn, backtest_df, name = "TEMP_STRATEGY") {
       Return = Portfolio_Return
     )
 
-  # Overwrite strategy to the database
+  # Read current strategies data
+  all_strategies_df <- dbGetQuery(conn, "SELECT * FROM strategies")
+
+  # If strategy already exists, remove it
+  all_strategies_df <- all_strategies_df %>%
+    filter(!Ticker %in% strategy_df)
+
+  # Append the new strategy
+  all_strategies_df <- all_strategies_df %>%
+    bind_rows(strategy_df)
+
+  # Overwrite to the database
   dbWriteTable(
     conn,
-    "strategies_temp",
-    strategy_df,
+    "strategies",
+    all_strategies_df,
     overwrite = TRUE,
     append = FALSE
   )
