@@ -96,4 +96,4 @@ generate_plots(backtest_df)
 plot_weights(portfolio_df, backtest_df)
 
 # Save the strategy
-save_strategy(conn, backtest_df, name = "TEMP_STRATEGY")
+save_strategy(conn, backtest_df, name = "QQQ_GLD_STATIC")
