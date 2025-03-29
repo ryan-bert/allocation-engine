@@ -680,7 +680,7 @@ save_strategy <- function(conn, backtest_df, name = "TEMP_STRATEGY") {
 
   # If strategy already exists, remove it
   all_strategies_df <- all_strategies_df %>%
-    filter(!Ticker %in% strategy_df)
+    filter(!Ticker %in% strategy_df$Ticker)
 
   # Append the new strategy
   all_strategies_df <- all_strategies_df %>%
