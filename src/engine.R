@@ -372,7 +372,7 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
     # Apply weights to benchmark data
     benchmark_df <- benchmark_df %>%
       group_by(Date) %>%
-      mutate(Benchmark_Return = sum(Return * Weight))
+      summarise(Benchmark_Return = sum(Return * Weight))
   }
 
   # Merge with backtest data
