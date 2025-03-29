@@ -109,10 +109,14 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
       Rebalance_Weight
   ))
 
-  # Normalize weights to ensure they sum to 1 each day
+  # Normalise weights to ensure they sum to 1 each day
   portfolio_df <- portfolio_df %>%
     group_by(Date) %>%
-    mutate(Weight = Weight / sum(abs(Weight), na.rm = TRUE)) %>%
+    mutate(Weight = if_else(
+      Weight == 0,
+      0,
+      Weight / sum(abs(Weight)),
+    )) %>%
     ungroup() %>%
     select(Date, Ticker, Return, Weight, Is_Rebalance)
 
@@ -139,17 +143,19 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
       Is_Rebalance,
       lag(Weight, default = 0) * lag(1 + Return, default = 1),
       Weight
-    ))
+    )) %>%
+    ungroup()
 
   # Normalise real weights
   portfolio_df <- portfolio_df %>%
     group_by(Date) %>%
-    mutate(
-      Total_Weight = sum(abs(Real_Weight)),
-      Real_Weight = if_else(Total_Weight == 0, 0, Real_Weight / Total_Weight)
-    ) %>%
+    mutate(Real_Weight = if_else(
+      Real_Weight == 0,
+      0,
+      Real_Weight / sum(abs(Real_Weight)),
+    )) %>%
     ungroup() %>%
-    select(-Total_Weight)
+    select(Date, Ticker, Return, Real_Weight, Weight, Is_Rebalance)
 
   # Calculate transaction costs on rebalance days
   portfolio_df <- portfolio_df %>%
