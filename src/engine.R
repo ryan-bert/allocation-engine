@@ -105,7 +105,7 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
   portfolio_df <- portfolio_df %>%
     mutate(Weight = if_else(
       !Is_Rebalance,
-      Rebalance_Weight * (1 + lag(Return_Since_Rebalance)),
+      Rebalance_Weight * lag(1 + Return_Since_Rebalance),
       Rebalance_Weight
   ))
 
@@ -170,7 +170,11 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
 
   # Adjust returns for transaction costs
   portfolio_df <- portfolio_df %>%
-    mutate(Return = (1 + Return) * (1 - Tx_Cost) - 1)
+    mutate(Return = if_else(
+      Weight < 0,
+      (1 + Return) / (1 - Tx_Cost) - 1,
+      (1 + Return) * (1 - Tx_Cost) - 1
+    ))
 
   return(portfolio_df)
 }
