@@ -342,18 +342,44 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
 
   # Load benchmark data (no formula)
   if(!str_detect(benchmark_ticker, "\\+")) {
-    benchmark_df <- benchmark_df %>%
-      filter(Ticker == benchmark_ticker) %>%
-      select(Date, Benchmark_Return = Return)
 
-  # Load data according to formula
+    # Constant benchmark: A specified annual risk-free rate
+    if(str_detect(benchmark_ticker, "RFR_")) {
+
+      # Extract RFR from ticker string
+      annual_RFR <- as.numeric(str_split(benchmark_ticker, "_", simplify = TRUE)[2]) / 100
+
+      # Define a vector of unique dates
+      unique_dates <- unique(backtest_df$Date)
+
+      # Create a data frame with the unique dates
+      benchmark_df <- data.frame(Date = unique_dates)
+
+      # Calculate daily return based on annual RFR
+      benchmark_df <- benchmark_df %>%
+        arrange(Date) %>%
+        mutate(
+          Delta_t = as.numeric(Date - lag(Date, default = first(Date))),
+          Benchmark_Return = (1 + annual_RFR) ^ (Delta_t / 365.25) - 1
+        ) %>%
+        select(Date, Benchmark_Return)
+
+    # Standard benchmark: A given ticker
+    } else {
+
+      benchmark_df <- benchmark_df %>%
+        filter(Ticker == benchmark_ticker) %>%
+        select(Date, Benchmark_Return = Return)
+    }
+
+  # Set benchmark according to formula
   } else {
 
     # Parse benchmark formula (eg "0.6*SPY + 0.4*TLT")
     benchmark_components <- str_split(benchmark_ticker, " \\+ ", simplify = TRUE)
 
     # Extract tickers and weights
-    parsed_components <- lapply(benchmark_components, function(component) {
+    benchmark_weights <- lapply(benchmark_components, function(component) {
       parts <- str_split(component, "\\*", simplify = TRUE)
       weight <- as.numeric(parts[1])
       ticker <- parts[2]
@@ -361,15 +387,15 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
     })
 
     # Convert list to data frame
-    parsed_components <- bind_rows(parsed_components)
+    benchmark_weights <- bind_rows(benchmark_weights)
 
     # Left join to benchmark data
     benchmark_df <- benchmark_df %>%
-      filter(Ticker %in% parsed_components$Ticker) %>%
-      left_join(parsed_components, by = "Ticker")
+      filter(Ticker %in% benchmark_weights$Ticker) %>%
+      left_join(benchmark_weights, by = "Ticker")
 
     # Get maximum min-date
-    min_date <- benchmark_df %>%
+    max_min_date <- benchmark_df %>%
       group_by(Ticker) %>%
       summarise(Min_Date = min(Date)) %>%
       summarise(Min_Date = max(Min_Date)) %>%
@@ -377,7 +403,7 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
 
     # Filter dates such that benchmark assets have same date range
     benchmark_df <- benchmark_df %>%
-      filter(Date >= min_date)
+      filter(Date >= max_min_date)
 
     # Apply weights to benchmark data
     benchmark_df <- benchmark_df %>%
