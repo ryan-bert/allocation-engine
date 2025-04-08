@@ -252,11 +252,11 @@ compute_drawdown <- function(backtest_df, is_benchmark = FALSE) {
 #' Computes key performance metrics including CAGR, volatility, Sharpe ratio, drawdowns, Sortino ratio, and Calmar ratio.
 #'
 #' @param backtest_df A data frame with portfolio returns.
-#' @param bonds_df A data frame containing risk-free rate data.
+#' @param macros_df A data frame containing risk-free rate data.
 #' @param is_benchmark A logical value; if TRUE, computes benchmark performance.
 #'
 #' @return A data frame with key performance metrics.
-analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
+analyse_performance <- function(backtest_df, macros_df, is_benchmark = FALSE) {
 
   # Define inputs based on is_benchmark
   if (is_benchmark) {
@@ -270,14 +270,14 @@ analyse_performance <- function(backtest_df, bonds_df, is_benchmark = FALSE) {
   }
 
   # Pull bond data and compute RFR
-  bonds_df <- bonds_df %>%
+  macros_df <- macros_df %>%
     filter(Ticker == "DGS3MO") %>%
-    mutate(Annual_RFR = Yield / 100) %>%
+    mutate(Annual_RFR = Price / 100) %>%
     select(Date, Annual_RFR)
 
   # Merge with backtest data
   backtest_df <- backtest_df %>%
-    left_join(bonds_df, by = "Date") %>%
+    left_join(macros_df, by = "Date") %>%
     arrange(Date) %>%
     fill(Annual_RFR, .direction = "down") %>%
     fill(Annual_RFR, .direction = "up")
