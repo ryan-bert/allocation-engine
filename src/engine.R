@@ -438,7 +438,7 @@ include_benchmark <- function(backtest_df, benchmark_df, benchmark_ticker) {
 #' @param backtest_df A data frame containing indexed return data.
 #'
 #' @return Saves multiple plots in the `plots/` directory.
-generate_plots <- function(backtest_df) {
+generate_plots <- function(backtest_df, plot_rel_dir = "plots") {
 
   # Define the current directory
   current_dir <- dirname(sys.frame(1)$ofile)
@@ -467,7 +467,7 @@ ggplot(density_df, aes(x = Return, fill = Ticker, color = Ticker)) +
   ) +
   theme(plot.title = element_text(face = "bold", size = 14))
 suppressMessages({
-  ggsave(file.path(current_dir, "plots/returns_distribution.png"))
+  ggsave(file.path(current_dir, plot_rel_dir, "returns_distribution.png"))
 })
 
   # Plot the rolling drawdown with benchmark comparison
@@ -483,7 +483,7 @@ suppressMessages({
     ) +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "plots/rolling_drawdown.png"))
+    ggsave(file.path(current_dir, plot_rel_dir, "rolling_drawdown.png"))
   })
 
   # Create the Indexed Return plot (upper panel)
@@ -519,10 +519,7 @@ suppressMessages({
   # Combine the two plots vertically with patchwork
   combined_plot <- p1 / p2 + plot_layout(heights = c(3, 1))
   suppressMessages({
-    ggsave(
-      file.path(current_dir, "plots/indexed_return.png"),
-      plot = combined_plot
-    )
+    ggsave(file.path(current_dir, plot_rel_dir, "indexed_return.png"), plot = combined_plot)
   })
 
   # Indexed returns on a log scale
@@ -540,10 +537,7 @@ suppressMessages({
   # Combine the two plots vertically with patchwork
   combined_log <- log_plot / p2 + plot_layout(heights = c(3, 1))
   suppressMessages({
-    ggsave(
-      file.path(current_dir, "plots/log_indexed_return.png"),
-      plot = combined_log
-    )
+    ggsave(file.path(current_dir, plot_rel_dir, "log_indexed_return.png"), plot = combined_log)
   })
 
   # Calculate the performance ratio
@@ -561,7 +555,7 @@ suppressMessages({
     ) +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "plots/performance_ratio.png"))
+    ggsave(file.path(current_dir, plot_rel_dir, "performance_ratio.png"))
   })
 
   # Scatter plot of Portfolio vs Benchmark returns
@@ -575,7 +569,7 @@ suppressMessages({
     ) +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "plots/scatter_plot.png"))
+    ggsave(file.path(current_dir, plot_rel_dir, "scatter_plot.png"))
   })
 
   # Calculate monthly returns
@@ -601,7 +595,7 @@ suppressMessages({
         y = "Portfolio Monthly Return") +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "plots/monthly_quadratic_scatter.png"))
+    ggsave(file.path(current_dir, plot_rel_dir, "monthly_quadratic_scatter.png"))
   })
 
   # Calculate yearly returns
@@ -627,7 +621,7 @@ suppressMessages({
         y = "Portfolio Yearly Return") +
     theme(plot.title = element_text(face = "bold", size = 14))
   suppressMessages({
-    ggsave(file.path(current_dir, "plots/yearly_quadratic_scatter.png"))
+    ggsave(file.path(current_dir, plot_rel_dir, "yearly_quadratic_scatter.png"))
   })
 }
 
@@ -641,7 +635,7 @@ suppressMessages({
 #' @param backtest_df A data frame containing backtest data, used to match the date range.
 #'
 #' @return Saves a combined grid of weight plots in the `plots/` directory.
-plot_weights <- function(portfolio_df, backtest_df) {
+plot_weights <- function(portfolio_df, backtest_df, plot_rel_dir = "plots") {
 
   # Set date range to match backtest period
   portfolio_df <- portfolio_df %>%
@@ -685,7 +679,7 @@ plot_weights <- function(portfolio_df, backtest_df) {
   # Combine all weight plots into a grid
   stitched_weight_plot <- wrap_plots(weight_plots) + plot_layout(ncol = 2)
   suppressMessages({
-    ggsave(file.path(current_dir, "plots/weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
+    ggsave(file.path(current_dir, plot_rel_dir, "weights_over_time.png"), plot = stitched_weight_plot, width = 12, height = 8)
   })
 }
 

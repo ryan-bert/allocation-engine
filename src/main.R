@@ -68,7 +68,7 @@ backtest_df <- run_backtest(portfolio_df, "1990-01-01", "2021-01-12")
 backtest_df <- compute_drawdown(backtest_df)
 
 # Get performance metrics
-bonds_df <- dbGetQuery(conn, "SELECT * FROM bonds")
+bonds_df <- dbGetQuery(conn, "SELECT * FROM macros")
 performance_df <- analyse_performance(backtest_df, bonds_df)
 
 # Include benchmark to backtest
