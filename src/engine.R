@@ -242,6 +242,19 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
   return(portfolio_df)
 }
 
+#' Apply Interest Costs to Portfolio
+#'
+#' This function adds an interest cost component to the portfolio by calculating the 
+#' borrowing cost (or cash yield) implied by the 3-month US Treasury rate (DGS3MO),
+#' based on daily gross exposure relative to 1.
+#'
+#' If gross exposure > 1, borrowing costs are applied.  
+#' If gross exposure < 1, risk-free returns on excess cash are earned.
+#'
+#' @param portfolio_df A data frame containing portfolio data with columns: Date, Ticker, Return, Weight, and Total_Weight.
+#' @param macros_df A data frame containing macroeconomic data including the DGS3MO risk-free rate.
+#'
+#' @return A data frame with the interest cost added as an extra asset.
 apply_interest <- function(portfolio_df, macros_df) {
 
   # Get the risk-free rate data
