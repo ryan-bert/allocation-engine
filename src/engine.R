@@ -33,6 +33,17 @@ align_dates <- function(portfolio_df) {
   return(portfolio_df)
 }
 
+#' Validate Strategy
+#'
+#' Validates a portfolio dataframe by ensuring:
+#' - No NA values in `Weight` or `Return`.
+#' - All weekdays within the date range are present for each ticker.
+#' - No duplicate entries for the same `Date` and `Ticker`.
+#'
+#' Stops execution with an error message if validation fails.
+#'
+#' @param portfolio_df A dataframe with columns: `Ticker`, `Date`, `Weight`, `Return`.
+#' @return None. Stops execution if validation fails.
 validate_strategy <- function(portfolio_df) {
 
   # Check for any NA weights or returns
@@ -115,16 +126,6 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
     distinct(Date) %>%
     arrange(Date) %>%
     pull(Date)
-
-  # Tickers must have a weight on every date (even if zero)
-  portfolio_df <- portfolio_df %>%
-    group_by(Ticker) %>%
-    complete(Date = unique_dates) %>%
-    ungroup() %>%
-    mutate(
-      Weight = if_else(is.na(Weight), 0, Weight),
-      Return = if_else(is.na(Return), 0, Return)
-    )
 
   # Select every nth date as rebalance date
   rebalance_dates <- unique_dates[seq(1, length(unique_dates), by = rebalance_freq)]
