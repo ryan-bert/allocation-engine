@@ -231,8 +231,6 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
     ungroup() %>%
     select(-Real_Weight)
 
-  View(portfolio_df)
-
   # Adjust returns for transaction costs
   portfolio_df <- portfolio_df %>%
     mutate(Return = if_else(
@@ -245,8 +243,6 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
 }
 
 apply_interest <- function(portfolio_df, macros_df) {
-
-  View(portfolio_df)
 
   # Get the risk-free rate data
   interest_df <- macros_df %>%
