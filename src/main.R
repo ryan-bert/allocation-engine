@@ -27,22 +27,25 @@ conn <- dbConnect(
   password = credentials$password
 )
 
-# Load the data from the database
-stocks_df <- dbGetQuery(conn, "SELECT * FROM equities")
-stocks_df$Date <- as.Date(stocks_df$Date)
-etf_df <- dbGetQuery(conn, "SELECT * FROM etfs")
-etf_df$Date <- as.Date(etf_df$Date)
+# Load data from the database
+etf_df <- dbGetQuery(conn, "SELECT * FROM etfs") %>% mutate(Date = as.Date(Date))
+stocks_df <- dbGetQuery(conn, "SELECT * FROM equities") %>% mutate(Date = as.Date(Date))
+crypto_df <- dbGetQuery(conn, "SELECT * FROM crypto") %>% mutate(Date = as.Date(Date))
+index_df <- dbGetQuery(conn, "SELECT * FROM indices") %>% mutate(Date = as.Date(Date))
+futures_df <- dbGetQuery(conn, "SELECT * FROM futures") %>% mutate(Date = as.Date(Date))
+macros_df <- dbGetQuery(conn, "SELECT * FROM macros") %>% mutate(Date = as.Date(Date))
 
-# ETF selection
-etf_df <- etf_df %>%
-  filter(Ticker %in% c("SPY", "QQQ", "GLD", "SOXX", "EFA"))
+# Combine into single dataframe
+assets_df <- etf_df %>%
+  bind_rows(stocks_df) %>%
+  bind_rows(crypto_df) %>%
+  bind_rows(index_df) %>%
+  bind_rows(futures_df) %>%
+  bind_rows(macros_df)
 
-# Stock selection
-stocks_df <- stocks_df %>%
-  filter(Ticker == "BRK-B")
-
-# Combine the data
-portfolio_df <- bind_rows(stocks_df, etf_df)
+# Choose assets to include in the strategy
+portfolio_df <- assets_df %>%
+  filter(Ticker %in% c("SPY", "QQQ", "GLD", "SOXX", "EFA", "BRK-B"))
 
 ###################### STRATEGY ######################
 
@@ -61,6 +64,9 @@ portfolio_df <- apply_rebalancing(portfolio_df, rebalance_freq = 21)
 # Apply transaction fees
 portfolio_df <- apply_fees(portfolio_df, tx_fee = 0.007)
 
+# Apply interest
+portfolio_df <- apply_interest(portfolio_df, assets_df)
+
 ###################### BACKTEST ######################
 
 # Run backtest to compute portfolio returns and value
@@ -70,12 +76,10 @@ backtest_df <- run_backtest(portfolio_df, "1990-01-01", "2021-01-12")
 backtest_df <- compute_drawdown(backtest_df)
 
 # Get performance metrics
-bonds_df <- dbGetQuery(conn, "SELECT * FROM macros")
-performance_df <- analyse_performance(backtest_df, bonds_df)
+performance_df <- analyse_performance(backtest_df, assets_df)
 
 # Include benchmark to backtest
-benchmark_df <- dbGetQuery(conn, "SELECT * FROM etfs")
-backtest_df <- include_benchmark(backtest_df, benchmark_df, "SPY")
+backtest_df <- include_benchmark(backtest_df, assets_df, "SPY")
 
 # Compute rolling benchmark drawdown
 backtest_df <- compute_drawdown(backtest_df, is_benchmark = TRUE)
@@ -83,7 +87,7 @@ backtest_df <- compute_drawdown(backtest_df, is_benchmark = TRUE)
 # Get performance metrics for benchmark and combine
 performance_df <- analyse_performance(
   backtest_df,
-  bonds_df,
+  assets_df,
   is_benchmark = TRUE
 ) %>%
   left_join(performance_df, by = "Metric") %>%

@@ -218,8 +218,7 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
       0,
       (Real_Weight / sum(abs(Real_Weight))) * Total_Weight,
     )) %>%
-    ungroup() %>%
-    select(Date, Ticker, Return, Real_Weight, Weight, Is_Rebalance)
+    ungroup()
 
   # Calculate transaction costs on rebalance days
   portfolio_df <- portfolio_df %>%
@@ -232,6 +231,8 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
     ungroup() %>%
     select(-Real_Weight)
 
+  View(portfolio_df)
+
   # Adjust returns for transaction costs
   portfolio_df <- portfolio_df %>%
     mutate(Return = if_else(
@@ -239,6 +240,44 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
       (1 + Return) / (1 - Tx_Cost) - 1,
       (1 + Return) * (1 - Tx_Cost) - 1
     ))
+
+  return(portfolio_df)
+}
+
+apply_interest <- function(portfolio_df, macros_df) {
+
+  View(portfolio_df)
+
+  # Get the risk-free rate data
+  interest_df <- macros_df %>%
+    mutate(Date = as.Date(Date)) %>%
+    filter(Ticker == "DGS3MO") %>%
+    filter(Date %in% unique(portfolio_df$Date)) %>%
+    arrange(Date) %>%
+    mutate(
+      Delta_t = as.numeric(Date - lag(Date)),
+      Delta_t = ifelse(is.na(Delta_t), 1, Delta_t),
+      Return = (1 + Price / 100) ^ (Delta_t / 365.25) - 1,
+      Return = if_else(wday(Date) == 2, Return * 3, Return)
+    ) %>%
+    mutate(Ticker = "INTEREST") %>%
+    select(Date, Ticker, Return)
+
+  # Merge with portfolio data
+  interest_df <- interest_df %>%
+    left_join(
+      portfolio_df %>% select(Date, Total_Weight),
+      by = "Date"
+    )
+
+  # Calculate weight based on total exposure
+  interest_df <- interest_df %>%
+    mutate(Weight = -1 * (Total_Weight - 1)) %>%
+    select(Date, Ticker, Return, Weight)
+
+  # Combine with portfolio data
+  portfolio_df <- portfolio_df %>%
+    bind_rows(interest_df)
 
   return(portfolio_df)
 }
