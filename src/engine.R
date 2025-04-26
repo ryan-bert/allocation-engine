@@ -737,22 +737,18 @@ suppressMessages({
 plot_weights <- function(portfolio_df, backtest_df, plot_rel_dir = "plots") {
 
   # Set date range to match backtest period
-  portfolio_df <- portfolio_df %>%
+  weights_df <- portfolio_df %>%
     filter(Date >= min(backtest_df$Date) & Date <= max(backtest_df$Date))
 
-  # Determine the global min and max of weight
-  weight_min <- min(portfolio_df$Weight, na.rm = TRUE)
-  weight_max <- max(portfolio_df$Weight, na.rm = TRUE)
-
   # Identify tickers with only-zero weights
-  invalid_tickers <- portfolio_df %>%
+  invalid_tickers <- weights_df %>%
     group_by(Ticker) %>%
     summarise(Weight_Sum = sum(Weight)) %>%
     filter(Weight_Sum == 0) %>%
     pull(Ticker)
 
   # Identify tickers with only NA weights
-  invalid_tickers <- portfolio_df %>%
+  invalid_tickers <- weights_df %>%
     group_by(Ticker) %>%
     arrange(Date) %>%
     summarise(All_NA = all(is.na(Weight))) %>%
@@ -761,16 +757,32 @@ plot_weights <- function(portfolio_df, backtest_df, plot_rel_dir = "plots") {
     union(invalid_tickers)
 
   # Filter out invalid tickers
-  portfolio_df <- portfolio_df %>%
+  weights_df <- weights_df %>%
     filter(!Ticker %in% invalid_tickers)
 
+  # Calculate total exposure for each date
+  total_weight_df <- weights_df %>%
+    filter(Ticker != "INTEREST") %>%
+    group_by(Date) %>%
+    summarise(Weight = sum(abs(Weight))) %>%
+    ungroup() %>%
+    mutate(Ticker = "Total Exposure (excl. Interest)")
+
+  # Combine total exposure with weights   
+  weights_df <- weights_df %>%
+    bind_rows(total_weight_df)
+
+  # Determine the global min and max of weight
+  weight_min <- min(weights_df$Weight, na.rm = TRUE) - 0.1
+  weight_max <- max(weights_df$Weight, na.rm = TRUE) + 0.1
+
   # Generate a list of plots for each ticker
-  weight_plots <- portfolio_df %>%
+  weight_plots <- weights_df %>%
     group_split(Ticker) %>%
     lapply(function(df) {
       ggplot(df, aes(x = Date, y = Weight)) +
         geom_line(color = "blue") +
-        ylim(weight_min, weight_max) +  # Set consistent y-axis limits
+        ylim(weight_min, weight_max) +
         labs(title = paste("Weight Over Time:", unique(df$Ticker)),
              x = "Date", y = "Weight") +
         theme_minimal()
