@@ -33,6 +33,63 @@ align_dates <- function(portfolio_df) {
   return(portfolio_df)
 }
 
+validate_strategy <- function(portfolio_df) {
+
+  # Check for any NA weights or returns
+  na_df <- portfolio_df %>%
+    filter(is.na(Weight) | is.na(Return)) %>%
+    mutate(Ticker_Date = paste0(Ticker, " -> ", Date)) %>%
+    select(Ticker_Date, Weight, Return)
+  if (nrow(na_df) > 0) {
+    cat("Error: NA values found:\n\n")
+    print(data.frame(na_df))
+    stop()
+  }
+
+  # Generate a complete sequence of weekdays
+  all_dates <- seq(min(portfolio_df$Date), max(portfolio_df$Date), by = "days")
+  all_dates <- all_dates[!wday(all_dates) %in% c(1, 7)]
+
+  # Complete the data with missing dates
+  portfolio_df <- portfolio_df %>%
+    group_by(Ticker) %>%
+    complete(Date = all_dates) %>%
+    ungroup()
+
+
+  # Check for any missing dates
+  missing_dates_df <- portfolio_df %>%
+    filter(is.na(Weight) | is.na(Return)) %>%
+    mutate(Ticker_Date = paste0(Ticker, " -> ", Date)) %>%
+    select(Ticker_Date)
+  if (nrow(missing_dates_df) > 0) {
+    cat("Error: Missing dates found:\n\n")
+    print(data.frame(missing_dates_df))
+    stop()
+  }
+
+  # Check for any duplicates
+  duplicates_df <- portfolio_df %>%
+    select(Date, Ticker) %>%
+    group_by(Date, Ticker) %>%
+    filter(n() > 1) %>%
+    ungroup() %>%
+    distinct() %>%
+    mutate(Ticker_Date = paste0(Ticker, " -> ", Date)) %>%
+    select(Ticker_Date)
+  if (nrow(duplicates_df) > 0) {
+    cat("Error: Duplicates found:\n\n")
+    print(data.frame(duplicates_df))
+    stop()
+  }
+
+  # Print success message
+  cat("\nValidation successful:\n")
+  cat("- No NA values.\n")
+  cat("- No missing dates.\n")
+  cat("- No duplicates.\n")
+}
+
 #' Apply Portfolio Rebalancing
 #'
 #' Adjusts portfolio weights based on a specified rebalancing frequency, allowing weights 

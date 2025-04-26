@@ -49,7 +49,9 @@ portfolio_df <- bind_rows(stocks_df, etf_df)
 # Ensure all assets have the same date range
 portfolio_df <- align_dates(portfolio_df)
 
+# Apply and validate the strategy
 portfolio_df <- apply_strategy(portfolio_df)
+validate_strategy(portfolio_df)
 
 ###################### NUANCES ######################
 
