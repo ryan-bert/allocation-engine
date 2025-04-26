@@ -120,6 +120,12 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
 
   # Print rebalance frequency
   cat("\nRebalance frequency: ", rebalance_freq, "days\n")
+
+  # Calculate total daily weight
+  portfolio_df <- portfolio_df %>%
+    group_by(Date) %>%
+    mutate(Total_Weight = sum(abs(Weight))) %>%
+    ungroup()
   
   # Get unique sorted dates
   unique_dates <- portfolio_df %>%
@@ -173,10 +179,10 @@ apply_rebalancing <- function(portfolio_df, rebalance_freq = 5) {
     mutate(Weight = if_else(
       Weight == 0,
       0,
-      Weight / sum(abs(Weight)),
+      (Weight / sum(abs(Weight))) * Total_Weight,
     )) %>%
     ungroup() %>%
-    select(Date, Ticker, Return, Weight, Is_Rebalance)
+    select(Date, Ticker, Return, Weight, Total_Weight, Is_Rebalance)
 
   return(portfolio_df)
 }
@@ -210,7 +216,7 @@ apply_fees <- function(portfolio_df, tx_fee = 0.001) {
     mutate(Real_Weight = if_else(
       Real_Weight == 0,
       0,
-      Real_Weight / sum(abs(Real_Weight)),
+      (Real_Weight / sum(abs(Real_Weight))) * Total_Weight,
     )) %>%
     ungroup() %>%
     select(Date, Ticker, Return, Real_Weight, Weight, Is_Rebalance)
