@@ -95,7 +95,7 @@ validate_strategy <- function(portfolio_df) {
   }
 
   # Print success message
-  cat("\nValidation successful:\n")
+  cat("\nStrategy Validation:\n")
   cat("- No NA values.\n")
   cat("- No missing dates.\n")
   cat("- No duplicates.\n")
