@@ -30,6 +30,18 @@ align_dates <- function(portfolio_df) {
   portfolio_df <- portfolio_df %>%
     filter(Date >= start_date)
 
+  # Get minimum max date
+  end_date <- portfolio_df %>%
+    group_by(Ticker) %>%
+    summarise(max_date = max(Date)) %>%
+    ungroup() %>%
+    summarise(min_max_date = min(max_date)) %>%
+    pull()
+
+  # Filter data to end at minimum max date
+  portfolio_df <- portfolio_df %>%
+    filter(Date <= end_date)
+
   return(portfolio_df)
 }
 
