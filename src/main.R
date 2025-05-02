@@ -70,7 +70,7 @@ portfolio_df <- apply_interest(portfolio_df, assets_df)
 ###################### BACKTEST ######################
 
 # Run backtest to compute portfolio returns and value
-backtest_df <- run_backtest(portfolio_df, "1990-01-01", "2021-01-12")
+backtest_df <- run_backtest(portfolio_df, "1990-01-01", "2025-05-12")
 
 # Compute rolling portfolio drawdown
 backtest_df <- compute_drawdown(backtest_df)
